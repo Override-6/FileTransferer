@@ -45,8 +45,8 @@ class DefaultNodeFinder(context: DefaultSerialContext) extends NodeFinder {
 
     override def listNodes[T](profile: ClassProfile[T], obj: T): List[SerialNode[_]] = {
         val fields = profile.desc.serializableFields
-        fields.map(field => {
-            val fieldValue = field.get(obj)
+        fields.map(fields => {
+            val fieldValue = fields.first.get(obj)
             if (fieldValue == null)
                 getSerialNodeForRef(null)
             else

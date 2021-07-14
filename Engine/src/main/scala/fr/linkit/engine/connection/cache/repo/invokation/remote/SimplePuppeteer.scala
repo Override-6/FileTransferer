@@ -92,10 +92,11 @@ class SimplePuppeteer[S](channel: RequestPacketChannel,
     }
 
     private def synchronizedArgs(desc: MethodBehavior, args: Array[Array[Any]]): Array[Array[Any]] = {
-        desc.synchronizedParams
+        val v = desc.synchronizedParams
                 .zip(args)
                 .map(pair => if (pair._1) pair._2.map(synchronizedObj) else pair._2)
                 .toArray
+        v
     }
 
     private def synchronizedObj(obj: Any): Any = {

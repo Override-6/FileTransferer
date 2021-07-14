@@ -13,7 +13,7 @@
 package fr.linkit.engine.connection.cache.repo.generation
 
 import fr.linkit.api.connection.cache.repo.PuppetWrapper
-import fr.linkit.api.connection.cache.repo.generation.GeneratedClassClassLoader
+import fr.linkit.api.connection.cache.repo.generation.GeneratedClassLoader
 import fr.linkit.api.local.generation.PuppetClassDescription
 import fr.linkit.api.local.generation.cbp.ClassBlueprint
 import fr.linkit.api.local.generation.compilation.CompilationResult
@@ -52,10 +52,11 @@ class WrapperCompilationRequestFactory extends AbstractCompilationRequestFactory
                                 .map { desc =>
                                     val clazz                    = desc.clazz
                                     val wrapperClassName         = adaptClassName(clazz.getName, WrapperPrefixName)
-                                    val loader                   = new GeneratedClassClassLoader(req.classDir, clazz.getClassLoader, Seq(classOf[LinkitApplication].getClassLoader))
+                                    val loader                   = new GeneratedClassLoader(req.classDir, clazz.getClassLoader, Seq(classOf[LinkitApplication].getClassLoader))
                                     val (byteCode, wrapperClass) = new ClassRectifier(desc, wrapperClassName, loader, clazz).rectifiedClass
                                     val wrapperClassFile         = req.classDir.resolve(wrapperClassName.replace(".", File.separator) + ".class")
                                     Files.write(wrapperClassFile, byteCode)
+                                    clazz.getSimpleName //Invoking a method in order to make the class load its reflectionData (causes fatal error if not made directly)
                                     ClassMappings.putClass(wrapperClass)
                                     wrapperClass
                                 })

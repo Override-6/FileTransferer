@@ -11,12 +11,19 @@
  */
 
 package fr.linkit.api.connection.packet.serialization.tree
+import fr.linkit.api.connection.packet.serialization.tree.SerializableClassDescription.Fields
+
 import java.lang.reflect.Field
 
 trait SerializableClassDescription {
-    val serializableFields: List[Field]
+    val serializableFields: List[Fields]
     val signItemCount: Int
     val classCode    : Array[Byte]
 
     def foreachDeserializableFields(action: (Int, Field) => Unit): Unit
+
+}
+
+object SerializableClassDescription {
+    case class Fields(first: Field, linked: Seq[Field])
 }

@@ -15,7 +15,7 @@ package fr.linkit.api.connection.cache.repo.generation
 import java.net.URLClassLoader
 import java.nio.file.Path
 
-class GeneratedClassClassLoader(val classRootFolder: Path, parent: ClassLoader, mates: Seq[ClassLoader]) extends URLClassLoader(Array(classRootFolder.toUri.toURL), parent) {
+class GeneratedClassLoader(val classRootFolder: Path, parent: ClassLoader, mates: Seq[ClassLoader]) extends URLClassLoader(Array(classRootFolder.toUri.toURL), parent) {
 
     override def loadClass(name: String, resolve: Boolean): Class[_] = {
         try {

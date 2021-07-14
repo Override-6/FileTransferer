@@ -15,13 +15,13 @@ package fr.linkit.engine.connection.packet.traffic.channel.request
 import fr.linkit.api.connection.packet.{Packet, PacketAttributes}
 import fr.linkit.api.local.system.AppLogger
 import fr.linkit.engine.connection.packet.AbstractAttributesPresence
-import fr.linkit.engine.connection.packet.serialization.tree.LinkDescendant
+import fr.linkit.engine.connection.packet.serialization.tree.LinkLine
 import fr.linkit.engine.local.utils.ScalaUtils.ensurePacketType
 
 import java.util.NoSuchElementException
 import scala.reflect.ClassTag
 
-sealed abstract class SubmitterPacket(@LinkDescendant id: Int, @LinkDescendant packets: Array[Packet]) extends AbstractAttributesPresence with Packet {
+sealed abstract class SubmitterPacket(@LinkLine id: Int, @LinkLine packets: Array[Packet]) extends AbstractAttributesPresence with Packet {
 
     @transient private var packetIndex                  = 0
     @transient private var attributes: PacketAttributes = _

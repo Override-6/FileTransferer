@@ -12,7 +12,7 @@
 
 package fr.linkit.engine.local.generation.compilation
 
-import fr.linkit.api.connection.cache.repo.generation.GeneratedClassClassLoader
+import fr.linkit.api.connection.cache.repo.generation.GeneratedClassLoader
 import fr.linkit.api.local.generation.compilation.CompilationResult
 import fr.linkit.engine.local.LinkitApplication
 import fr.linkit.engine.local.generation.compilation.SourceCodeCompilationRequest.SourceCode
@@ -33,7 +33,10 @@ object SourceCodeCompilationRequestFactory extends AbstractCompilationRequestFac
                         Some(contexts
                                 .filter(context => outs.contains(workingDir.resolve(context._1.className)))
                                 .map { context =>
-                                    new GeneratedClassClassLoader(workingDir, context._2, Seq(classOf[LinkitApplication].getClassLoader)).loadClass(context._1.className)
+                                    val loader = new GeneratedClassLoader(workingDir, context._2, Seq(classOf[LinkitApplication].getClassLoader))
+                                    val clazz = Class.forName(context._1.className, true, loader)
+                                    clazz.getDeclaredFields //Invoking a method in order to make the class load its reflectionData (causes fatal error if not made directly)
+                                    clazz
                                 })
                     }
                 }

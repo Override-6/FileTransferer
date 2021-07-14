@@ -13,7 +13,7 @@
 package fr.linkit.engine.connection.cache.repo.generation
 
 import fr.linkit.api.connection.cache.repo.PuppetWrapper
-import fr.linkit.api.connection.cache.repo.generation.GeneratedClassClassLoader
+import fr.linkit.api.connection.cache.repo.generation.GeneratedClassLoader
 import fr.linkit.api.local.resource.external.ResourceFolder
 import fr.linkit.api.local.resource.representation.{FolderRepresentation, ResourceRepresentationFactory}
 import fr.linkit.engine.connection.cache.repo.generation.WrappersClassResource.WrapperPrefixName
@@ -42,8 +42,9 @@ class WrappersClassResource(override val resource: ResourceFolder) extends Folde
                 if (loader == null)
                     loader = getClass.getClassLoader //Use the Application's classloader
 
-                val classLoader = new GeneratedClassClassLoader(folderPath, loader, Seq(classOf[LinkitApplication].getClassLoader))
+                val classLoader = new GeneratedClassLoader(folderPath, loader, Seq(classOf[LinkitApplication].getClassLoader))
                 val clazz = Class.forName(wrapperClassName, false, classLoader).asInstanceOf[Class[_ <: PuppetWrapper[AnyRef]]]
+                clazz.getSimpleName //Invoking a method in order to make the class load its reflectionData (causes fatal error if not made directly)
                 ClassMappings.putClass(clazz)
                 clazz
             }

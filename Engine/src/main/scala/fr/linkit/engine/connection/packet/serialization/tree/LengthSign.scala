@@ -46,7 +46,7 @@ object LengthSign {
         val byteArrays = new Array[Array[Byte]](children.size)
 
         val fieldValues = desc.serializableFields
-                .map(_.get(root))
+                .map(_.first.get(root))
 
        //println(s"fieldValues = ${fieldValues}")
 

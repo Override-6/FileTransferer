@@ -12,7 +12,7 @@
 
 package fr.linkit.api.connection.cache.repo
 
-import fr.linkit.api.connection.cache.repo.description.{PuppetDescription, PuppeteerDescription}
+import fr.linkit.api.connection.cache.repo.description.{PuppeteerInfo, WrapperBehavior}
 
 trait Puppeteer[S] {
     
@@ -20,9 +20,9 @@ trait Puppeteer[S] {
 
     val repo: ObjectSynchronizer
 
-    val puppeteerDescription: PuppeteerDescription
+    val puppeteerDescription: PuppeteerInfo
 
-    val puppetDescription: PuppetDescription[S]
+    val wrapperBehavior: WrapperBehavior[S]
 
     def isCurrentEngineOwner: Boolean
 
@@ -34,5 +34,4 @@ trait Puppeteer[S] {
 
     def sendInvoke(methodId: Int, args: Array[Array[Any]]): Unit
 
-    def sendFieldUpdate(fieldId: Int, newValue: Any): Unit
 }

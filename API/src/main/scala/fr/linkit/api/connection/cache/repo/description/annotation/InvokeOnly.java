@@ -10,7 +10,7 @@
  *  questions.
  */
 
-package fr.linkit.api.connection.cache.repo.annotations;
+package fr.linkit.api.connection.cache.repo.description.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

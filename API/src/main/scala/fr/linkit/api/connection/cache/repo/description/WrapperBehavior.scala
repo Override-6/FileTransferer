@@ -10,14 +10,21 @@
  *  questions.
  */
 
-package fr.linkit.engine.connection.cache.repo.tree
+package fr.linkit.api.connection.cache.repo.description
 
-import fr.linkit.api.connection.cache.repo.tree.SyncNode
-import fr.linkit.engine.connection.cache.repo.invokation.remote.InvocationPacket
-import fr.linkit.engine.connection.packet.traffic.channel.request.ResponseSubmitter
+import fr.linkit.api.local.generation.PuppetClassDescription
 
-trait MemberSyncNode[A] extends SyncNode[A]{
+trait WrapperBehavior[A] {
 
-    def handlePacket(packet: InvocationPacket, response: ResponseSubmitter): Unit
+    val classDesc: PuppetClassDescription[A]
 
+    val treeView: TreeViewBehavior
+
+    def listMethods(): Iterable[MethodBehavior]
+
+    def getMethodBehavior(id: Int): Option[MethodBehavior]
+
+    def listField(): Iterable[FieldBehavior]
+
+    def getFieldBehavior(id: Int): Option[FieldBehavior]
 }

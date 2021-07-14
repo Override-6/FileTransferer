@@ -25,23 +25,22 @@ abstract class DynamicSocket(autoReconnect: Boolean = true) extends JustifiedClo
     @volatile protected var currentSocket      : Socket               = _
     @volatile protected var currentOutputStream: BufferedOutputStream = _
     @volatile protected var currentInputStream : InputStream          = _
-    @volatile private   var totalWriteTime     : Long                 = 0
+    //@volatile private   var totalWriteTime     : Long                 = 0
 
     private val listeners = ConsumerContainer[ExternalConnectionState]()
 
     def boundIdentifier: String
 
     def write(buff: Array[Byte]): Unit = {
-        val t0 = System.currentTimeMillis()
+        //val t0 = System.currentTimeMillis()
         SocketLocker.awaitConnected()
         ensureReady()
         SocketLocker.markAsWriting()
         try {
             currentOutputStream.write(buff)
             currentOutputStream.flush()
-            val t1 = System.currentTimeMillis()
-
-            totalWriteTime += t1 - t0
+            //val t1 = System.currentTimeMillis()
+            //totalWriteTime += t1 - t0
             //NETWORK-DEBUG-MARK
             AppLogger.logUpload(boundIdentifier, buff)
         } catch {

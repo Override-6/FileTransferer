@@ -12,8 +12,8 @@
 
 package fr.linkit.engine.test
 
+import fr.linkit.api.connection.cache.repo.description.PuppeteerInfo
 import fr.linkit.api.connection.cache.repo.{InvocationChoreographer, PuppetWrapper}
-import fr.linkit.api.connection.cache.repo.description.{PuppetDescription, PuppeteerDescription}
 import fr.linkit.api.connection.packet.DedicatedPacketCoordinates
 import fr.linkit.api.local.generation.TypeVariableTranslator
 import fr.linkit.api.local.resource.external.ResourceFolder
@@ -21,9 +21,12 @@ import fr.linkit.api.local.system.config.ApplicationConfiguration
 import fr.linkit.api.local.system.fsa.FileSystemAdapter
 import fr.linkit.api.local.system.security.ApplicationSecurityManager
 import fr.linkit.api.local.system.{AppLogger, Version}
+import fr.linkit.engine.connection.cache.repo.CacheRepoContent
 import fr.linkit.engine.connection.cache.repo.DefaultEngineObjectCenter.PuppetProfile
-import fr.linkit.engine.connection.cache.repo.generation.{PuppetWrapperClassGenerator, WrapperInstantiator, WrappersClassResource}
-import fr.linkit.engine.connection.cache.repo.{CacheRepoContent, SimplePuppeteer}
+import fr.linkit.engine.connection.cache.repo.description.annotation.AnnotationBasedMemberBehaviorFactory
+import fr.linkit.engine.connection.cache.repo.description.{SimplePuppetClassDescription, SimpleWrapperBehavior, TreeViewDefaultBehaviors}
+import fr.linkit.engine.connection.cache.repo.generation.{CloneHelper, PuppetWrapperClassGenerator, WrappersClassResource}
+import fr.linkit.engine.connection.cache.repo.invokation.remote.SimplePuppeteer
 import fr.linkit.engine.connection.packet.fundamental.RefPacket.AnyRefPacket
 import fr.linkit.engine.connection.packet.serialization.DefaultSerializer
 import fr.linkit.engine.connection.packet.traffic.channel.request.ResponsePacket
@@ -40,6 +43,7 @@ import org.junit.jupiter.api._
 import org.mockito.Mockito
 
 import java.util
+import java.util.concurrent.ThreadLocalRandom
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.reflect.runtime.universe.TypeTag
 
@@ -111,19 +115,38 @@ class ResourcesAndClassGenerationTests {
         println(s"ojb.b = ${obj.b}")
     }
 
+    private def getListBuff(): ListBuffer[String] = {
+        if (ThreadLocalRandom.current().nextBoolean())
+            new ListBufferImpl()
+        else new ListBuffer()
+    }
+
+    @Test
+    def wtfIsGoingOn(): Unit = {
+        println("Dumb implementation : ")
+        val test: ListBuffer[String] = getListBuff()
+        test.addOne("TETSFT")
+    }
+
     @Test
     @Order(3)
     def generateComplexScalaClass(): Unit = {
         val obj = forObject(ListBuffer.empty[String])
-        import scala.reflect.runtime.universe._
-        val method = obj.getClass.getMethod("addOne", classOf[Object])
-        val other = obj.getClass.getMethod("$plus$eq", classOf[Object])
-        val tpe = obj.getPuppetDescription.tpe
-        val scalaMethod = tpe.members.find(_.name.toString == "addOne").get
+        println(s"obj.getClass.getDeclaredFields = ${obj.getClass.getDeclaredFields.mkString("Array(", ", ", ")")}")
+
         println("Adding...")
         obj addOne "LOLn't"
-        println("Added !")
+        println(s"Added !")
         println(s"obj = $obj")
+    }
+
+    class ListBufferImpl extends ListBuffer[String] {
+
+        override def addOne(elem: String): ListBufferImpl.this.type = {
+            println("LOL")
+            //super.addOne(elem)
+            this
+        }
     }
 
     @Test
@@ -152,7 +175,7 @@ class ResourcesAndClassGenerationTests {
         forObject(LocalFileSystemAdapters.Nio)
     }
 
-    private def forObject[A: TypeTag](obj: A): A with PuppetWrapper[A] = {
+    def forObject[A: TypeTag](obj: A): A with PuppetWrapper[A] = {
         Assertions.assertNotNull(resources)
         val cl = obj.getClass.asInstanceOf[Class[A]]
 
@@ -160,8 +183,9 @@ class ResourcesAndClassGenerationTests {
         val generator   = new PuppetWrapperClassGenerator(new DefaultCompilerCenter, resource)
         val puppetClass = generator.getPuppetClass[A](cl)
         println(s"puppetClass = ${puppetClass}")
-        val pup    = new SimplePuppeteer[A](null, null, PuppeteerDescription("", 8, "", Array(1)), PuppetDescription[A](cl))
-        val puppet = WrapperInstantiator.instantiateFromOrigin[A](puppetClass, obj)
+        val factory = AnnotationBasedMemberBehaviorFactory()
+        val pup     = new SimplePuppeteer[A](null, null, PuppeteerInfo("", 8, "", Array(1)), SimpleWrapperBehavior(SimplePuppetClassDescription[A](cl), new TreeViewDefaultBehaviors(factory), factory))
+        val puppet  = CloneHelper.instantiateFromOrigin[A](puppetClass, obj)
         puppet.initPuppeteer(pup)
         puppet.getChoreographer.forceLocalInvocation {
             println(s"puppet = ${puppet}")

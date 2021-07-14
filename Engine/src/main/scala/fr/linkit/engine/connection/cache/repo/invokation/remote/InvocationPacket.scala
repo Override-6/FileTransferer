@@ -10,11 +10,10 @@
  *  questions.
  */
 
-package fr.linkit.engine.connection.cache.repo
+package fr.linkit.engine.connection.cache.repo.invokation.remote
 
 import fr.linkit.api.connection.packet.Packet
 
 case class InvocationPacket(path: Array[Int], methodID: Int, params: Array[Array[Any]]) extends Packet {
 
 }
-

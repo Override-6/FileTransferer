@@ -12,15 +12,16 @@
 
 package fr.linkit.engine.connection.cache.repo.generation.bp
 
-import fr.linkit.api.connection.cache.repo.description.PuppetDescription
-import fr.linkit.api.connection.cache.repo.description.PuppetDescription.MethodDescription
+import fr.linkit.api.connection.cache.repo.description.MethodDescription
+import fr.linkit.api.local.generation.PuppetClassDescription
+
 import scala.reflect.runtime.universe._
 
 object ScalaBlueprintUtilities {
 
-    def getGenericParams(desc: PuppetDescription[_], transform: Symbol => Any): String = {
+    def getGenericParams(desc: PuppetClassDescription[_], transform: Symbol => Any): String = {
         val result = desc
-                .tpe
+                .classType
                 .typeArgs
                 .map(t => transform(t.typeSymbol))
                 .mkString(",")
@@ -30,34 +31,25 @@ object ScalaBlueprintUtilities {
 
     def getReturnType(method: MethodDescription): String = {
         val methodSymbol = method.symbol
-        val classSymbol  = method.classDesc.tpe.typeSymbol
+        val classType    = method.classDesc.classType
+        val classSymbol  = classType.typeSymbol
         val tParams      = classSymbol.typeSignature.typeParams
         val tpe          = methodSymbol.returnType
-        val v            = renderTypes(Seq({
-            val base        = method.classDesc.tpe
+        renderTypes(Seq({
             val methodOwner = methodSymbol.owner
-            tpe.asSeenFrom(base, methodOwner).finalResultType
-        }), tParams)
-                .mkString("")
-        v.replace(classSymbol.fullName + getGenericParams(method.classDesc, _.name), "this.type")
+            tpe.asSeenFrom(classType, methodOwner).finalResultType
+        }), tParams).mkString("")
     }
 
     def getGenericParamsIn(method: MethodDescription): String = {
         val symbol      = method.symbol
-        val cTypeParams = method
-                .classDesc
-                .tpe
-                .typeParams
+        val classType   = method.classDesc.classType
+        val cTypeParams = classType.typeParams
         val mTypeParams = symbol.typeParams
         if (mTypeParams.isEmpty)
             return ""
-        val v = mTypeParams
-                .map(param => {
-                    val v = param
-                            .typeSignature
-                            .asSeenFrom(method.classDesc.tpe, symbol.owner).finalResultType
-                    v
-                })
+        mTypeParams
+                .map(_.typeSignature.asSeenFrom(classType, symbol.owner).finalResultType)
                 .zipWithIndex
                 .map(pair => {
                     val i   = pair._2
@@ -66,13 +58,12 @@ object ScalaBlueprintUtilities {
                     else tpe.name.toString + pair._1
                 })
                 .mkString("[", ",", "]")
-        v
     }
 
     def getGenericParamsOut(method: MethodDescription): String = {
         val cTypeParams = method
                 .classDesc
-                .tpe
+                .classType
                 .typeParams
         val mTypeParams = method
                 .symbol
@@ -81,7 +72,7 @@ object ScalaBlueprintUtilities {
                 .zipWithIndex
         if (mTypeParams.isEmpty)
             return ""
-        val v = mTypeParams
+        mTypeParams
                 .zipWithIndex
                 .map(pair => {
                     val i    = pair._2
@@ -90,12 +81,11 @@ object ScalaBlueprintUtilities {
                     else name
                 })
                 .mkString("[", ",", "]")
-        v
     }
 
     def getParameters(method: MethodDescription)(firstMkString: Seq[String] => String,
-                                                         secondMkString: Seq[String] => String,
-                                                         allowTypes: Boolean, allowVarargUpcast: Boolean): String = {
+                                                 secondMkString: Seq[String] => String,
+                                                 allowTypes: Boolean, allowVarargUpcast: Boolean): String = {
         var i = 0
 
         def n = {
@@ -106,7 +96,7 @@ object ScalaBlueprintUtilities {
         val symbol = method.symbol
 
         def argType(s: Symbol): String = {
-            val classType = method.classDesc.tpe
+            val classType = method.classDesc.classType
             val str       = renderTypes({
                 Seq(s
                         .typeSignature
@@ -116,7 +106,7 @@ object ScalaBlueprintUtilities {
             else if (allowTypes) ": " + str else ""
         }
 
-        val v = secondMkString {
+        secondMkString {
             symbol
                     .paramLists
                     .map(l => {
@@ -130,7 +120,6 @@ object ScalaBlueprintUtilities {
                         }))
                     })
         }
-        v
     }
 
     def renderTypes(types: Seq[Type], classLevelTypes: Seq[Symbol]): Seq[String] = {

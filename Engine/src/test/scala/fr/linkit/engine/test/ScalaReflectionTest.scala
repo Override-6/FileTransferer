@@ -12,6 +12,7 @@
 
 package fr.linkit.engine.test
 
+import fr.linkit.engine.local.utils.ScalaUtils
 import org.junit.jupiter.api.Test
 
 import scala.collection.mutable.ListBuffer
@@ -21,8 +22,10 @@ class ScalaReflectionTest {
 
     @Test
     def makeTests(): Unit = {
-        val tag = getTypeFlag[ListBuffer[_]].tpe
-        tag.decls
+        val v = ScalaUtils.allocate[ListBuffer[_]](classOf[ListBuffer[_]])
+        println("OK")
+        println(s"v = ${v}")
+
     }
 
     private def getTypeFlag[T: universe.TypeTag]: universe.TypeTag[T] = universe.typeTag[T]

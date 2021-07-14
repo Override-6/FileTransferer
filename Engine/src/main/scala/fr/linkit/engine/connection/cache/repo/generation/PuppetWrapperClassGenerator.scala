@@ -12,11 +12,12 @@
 
 package fr.linkit.engine.connection.cache.repo.generation
 
-import fr.linkit.api.connection.cache.repo.description.PuppetDescription
 import fr.linkit.api.connection.cache.repo.generation.PuppetWrapperGenerator
 import fr.linkit.api.connection.cache.repo.{InvalidPuppetDefException, PuppetWrapper}
+import fr.linkit.api.local.generation.PuppetClassDescription
 import fr.linkit.api.local.generation.compilation.CompilerCenter
 import fr.linkit.api.local.system.AppLogger
+import fr.linkit.engine.connection.cache.repo.description.SimplePuppetClassDescription
 import fr.linkit.engine.local.mapping.ClassMappings
 
 import scala.reflect.runtime.universe.TypeTag
@@ -27,10 +28,10 @@ class PuppetWrapperClassGenerator(center: CompilerCenter, resources: WrappersCla
     val requestFactory                  = new WrapperCompilationRequestFactory
 
     override def getPuppetClass[S](clazz: Class[S]): Class[S with PuppetWrapper[S]] = {
-        getPuppetClass[S](PuppetDescription[S](clazz))
+        getPuppetClass[S](SimplePuppetClassDescription[S](clazz))
     }
 
-    override def getPuppetClass[S](desc: PuppetDescription[S]): Class[S with PuppetWrapper[S]] = {
+    override def getPuppetClass[S](desc: PuppetClassDescription[S]): Class[S with PuppetWrapper[S]] = {
         val clazz = desc.clazz
         if (clazz.isInterface)
             throw new InvalidPuppetDefException("Provided class is abstract.")
@@ -52,11 +53,11 @@ class PuppetWrapperClassGenerator(center: CompilerCenter, resources: WrappersCla
             }
     }
 
-    override def preGenerateClasses[S : TypeTag](classes: Seq[Class[_ <: S]]): Unit = {
-        preGenerateDescs(classes.map(PuppetDescription[S]))
+    override def preGenerateClasses(classes: Seq[Class[_]]): Unit = {
+        preGenerateDescs(classes.map(SimplePuppetClassDescription(_)))
     }
 
-    override def preGenerateDescs[S](descriptions: Seq[PuppetDescription[S]]): Unit = {
+    override def preGenerateDescs(descriptions: Seq[PuppetClassDescription[_]]): Unit = {
         val toCompile = descriptions.filter(desc => resources.findWrapperClass(desc.clazz).isEmpty)
         if (toCompile.isEmpty)
             return

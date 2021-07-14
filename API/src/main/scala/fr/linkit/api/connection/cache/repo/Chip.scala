@@ -12,11 +12,23 @@
 
 package fr.linkit.api.connection.cache.repo
 
+/**
+ * The Chip is a class that controls an object of type [[S]]
+ * The controlled object is then considered as chipped and its chip
+ * can invoke any of its methods and set his fields values.
+ * */
 trait Chip[S] {
 
-    def updateField(fieldID: Int, value: Any): Unit
+    /**
+     * this method will transfer to the chipped object every fields
+     * values of the given object.
+     * @param obj the obj in where fields values will be pasted to the chipped object.
+     * */
+    def updateObject(obj: S): Unit
 
-    def updateAllFields(obj: S): Unit
-
-    def callMethod(methodID: Int, params: Seq[Any]): Any
+    /**
+     * Invokes the method of the chipped object.
+     * The method is determined by the methoidID integer. (see [[SimplePuppetClassDescription]]
+     * */
+    def callMethod(methodID: Int, params: Array[Array[Any]]): Any
 }

@@ -17,11 +17,11 @@ import fr.linkit.engine.local.utils.NumberSerializer
 
 import java.lang.reflect.{Field, Modifier}
 
-class ClassDescription(val clazz: Class[_]) extends SerializableClassDescription  {
+class ClassDescription(val clazz: Class[_]) extends SerializableClassDescription {
 
     val serializableFields: List[Field] = listSerializableFields(clazz)
     val signItemCount     : Int         = serializableFields.length - 1
-    val classSignature    : Array[Byte] = NumberSerializer.serializeInt(clazz.getName.hashCode)
+    val classCode         : Array[Byte] = NumberSerializer.serializeInt(clazz.getName.hashCode)
 
     override def foreachDeserializableFields(action: (Int, Field) => Unit): Unit = {
         var i = 0
@@ -50,10 +50,15 @@ class ClassDescription(val clazz: Class[_]) extends SerializableClassDescription
                     subClassFields.exists(subField => field.getType == subField.getType && field.getName == subField.getName)
         }
 
-        val initial = cl.getDeclaredFields
-                .filterNot(p => Modifier.isTransient(p.getModifiers) || Modifier.isStatic(p.getModifiers) || linkDescendant(p))
-                .tapEach(_.setAccessible(true))
-                .toList
+        var initial: List[Field] = List()
+        //val interfaces = cl.getInterfaces
+        //FIXME weird jvm fatal error when invoking Class#getDeclaredFields on a generated class
+        //if (!(interfaces.length == 1 && classOf[PuppetWrapper[_]].isAssignableFrom(interfaces.head))) {
+            initial = cl.getDeclaredFields
+                    .filterNot(p => Modifier.isTransient(p.getModifiers) || Modifier.isStatic(p.getModifiers) || linkDescendant(p))
+                    .tapEach(_.setAccessible(true))
+                    .toList
+        //}
 
         initial ++ listSerializableFields(cl.getSuperclass, initial) //++ cl.getInterfaces.flatMap(listSerializableFields(_, initial))
     }

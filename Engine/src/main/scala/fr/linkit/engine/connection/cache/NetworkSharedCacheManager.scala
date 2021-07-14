@@ -120,7 +120,6 @@ class NetworkSharedCacheManager(override val family: String,
         println(s"RECEIVED CONTENT REQUEST FOR IDENTIFIER $cacheID REQUESTOR : $senderID")
         println(s"Behavior = $behavior")
         val contentOpt = LocalCacheHandler.getContent(cacheID)
-
         if (contentOpt.isDefined) {
             response.addPacket(RefPacket[Option[CacheContent]](contentOpt))
         } else {
@@ -176,10 +175,10 @@ class NetworkSharedCacheManager(override val family: String,
         * will wait for its content's request, and thus its request response will be handled by another thread,
         * which will need LocalCacheHandler in order to retrieve the local cache, which is synchronized, so it will
         * be blocked until the thread that requested the content get it's response, but it's impossible because the thread
-        * that handles the request is locking...
+        * that handles the request is waiting...
         * For simple, if you remove this line, a deadlock will occur.
         * */
-        LocalCacheHandler
+        LocalCacheHandler.loadClass()
         val content       = retrieveCacheContent(1, CacheSearchBehavior.GET_OR_WAIT)
         val sharedObjects = SharedMap[Int, Serializable].createNew(this, 1, container)
         if (content.isDefined) {
@@ -250,6 +249,8 @@ class NetworkSharedCacheManager(override val family: String,
         }
 
         override def toString: String = localRegisteredCaches.toString()
+
+        def loadClass(): Unit = ()
 
     }
 

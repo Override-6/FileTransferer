@@ -10,11 +10,13 @@
  *  questions.
  */
 
-package fr.linkit.api.connection.cache.repo.description
+package fr.linkit.engine.test.classes
 
-case class PuppeteerDescription(cacheFamily: String,
-                                cacheID: Int,
-                                owner: String,
-                                treeViewPath: Array[Int]) {
+class ExtendsScalaClass extends ScalaClass {
+
+    override def testRMI(): this.type = {
+        println("IMPLEMENTATION")
+        super.testRMI()
+    }
 
 }

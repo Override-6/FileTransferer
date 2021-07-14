@@ -16,8 +16,9 @@ class ScalaClass() {
 
     var b: String = "Wesh la bite bien ou queue ?"
 
-    def testRMI(): Unit = {
+    def testRMI(): this.type = {
         println(s"RMI Done ! (${b})")
+        this
     }
 
 }

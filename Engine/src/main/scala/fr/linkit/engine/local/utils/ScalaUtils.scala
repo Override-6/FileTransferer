@@ -134,6 +134,8 @@ object ScalaUtils {
     }
 
     def allocate[A](clazz: Class[_]): A = {
+        if (clazz == null)
+            throw new NullPointerException
         TheUnsafe.allocateInstance(clazz).asInstanceOf[A]
     }
 

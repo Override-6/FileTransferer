@@ -13,16 +13,18 @@
 package fr.linkit.engine.connection.cache.repo.generation.rectifier
 
 import fr.linkit.agent.LinkitAgent
-import fr.linkit.api.connection.cache.repo.description.PuppetDescription
-import fr.linkit.api.connection.cache.repo.description.PuppetDescription.MethodDescription
+import fr.linkit.api.connection.cache.repo.PuppetWrapper
+import fr.linkit.api.connection.cache.repo.description.MethodDescription
 import fr.linkit.api.connection.cache.repo.generation.GeneratedClassClassLoader
+import fr.linkit.api.local.generation.PuppetClassDescription
+import fr.linkit.engine.connection.cache.repo.generation.rectifier.ClassRectifier.SuperMethodModifiers
 import javassist.bytecode.MethodInfo
 import javassist.{ClassPool, CtClass, CtMethod, LoaderClassPath}
 
 import java.lang.reflect.{Method, Modifier}
 import scala.collection.mutable.ListBuffer
 
-class ClassRectifier(desc: PuppetDescription[_], puppetClassName: String, classLoader: GeneratedClassClassLoader, superClass: Class[_]) {
+class ClassRectifier(desc: PuppetClassDescription[_], puppetClassName: String, classLoader: GeneratedClassClassLoader, superClass: Class[_]) {
 
     private val pool = ClassPool.getDefault
     pool.appendClassPath(new LoaderClassPath(classLoader))
@@ -32,8 +34,8 @@ class ClassRectifier(desc: PuppetDescription[_], puppetClassName: String, classL
     ctClass.setSuperclass(pool.get(superClass.getName))
     fixAllMethods()
 
-    lazy val rectifiedClass: (Array[Byte], Class[_]) = {
-        (ctClass.toBytecode, ctClass.toClass(classLoader, superClass.getProtectionDomain))
+    lazy val rectifiedClass: (Array[Byte], Class[PuppetWrapper[_]]) = {
+        (ctClass.toBytecode, ctClass.toClass(classLoader, superClass.getProtectionDomain).asInstanceOf[Class[PuppetWrapper[_]]])
     }
 
     private def removeAllSuperClassFinalFlags(): Unit = {
@@ -48,7 +50,7 @@ class ClassRectifier(desc: PuppetDescription[_], puppetClassName: String, classL
     private def fixAllMethods(): Unit = {
         implicit def extractModifiers(m: Method): Int = m.getModifiers
 
-        val methodDescs = desc.listMethods()
+        val methodDescs      = desc.listMethods()
         val superDescriptors = ListBuffer.empty[String]
 
         def fixMethod(desc: MethodDescription): Unit = {
@@ -58,8 +60,11 @@ class ClassRectifier(desc: PuppetDescription[_], puppetClassName: String, classL
             val superfunInfo = new MethodInfo(ctClass.getClassFile.getConstPool, superfunName, generateSuperFunDescriptor(javaMethod))
             if (superDescriptors.contains(superfunName + superfunInfo.getDescriptor))
                 return
-            val superfun     = CtMethod.make(superfunInfo, ctClass)
-            val anonfun      = getAnonFun(javaMethod)
+            val superfun = CtMethod.make(superfunInfo, ctClass)
+            val anonfun  = getAnonFun(javaMethod)
+
+            superfun.setModifiers(SuperMethodModifiers)
+
             ctClass.addMethod(superfun)
             superfun.setBody(getSuperFunBody(javaMethod))
             anonfun.setBody(getAnonFunBody(javaMethod, superfun))

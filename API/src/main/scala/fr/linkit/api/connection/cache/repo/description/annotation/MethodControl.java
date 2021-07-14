@@ -10,7 +10,7 @@
  *  questions.
  */
 
-package fr.linkit.api.connection.cache.repo.annotations;
+package fr.linkit.api.connection.cache.repo.description.annotation;
 
 import org.jetbrains.annotations.Contract;
 
@@ -29,7 +29,7 @@ public @interface MethodControl {
 
     /**
      * Specifies what kind of invocation the implementation of the annotated method must do.
-     * @see fr.linkit.api.connection.cache.repo.annotations.InvocationKind
+     * @see fr.linkit.api.connection.cache.repo.description.annotation.InvocationKind
      * */
     InvocationKind value() default InvocationKind.LOCAL_AND_REMOTES;
 

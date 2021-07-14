@@ -14,12 +14,12 @@ package gen.$WrappedClassPackage$
 
 import $WrappedClassName$
 import fr.linkit.api.connection.cache.repo.InvocationChoreographer
-import fr.linkit.api.connection.cache.repo.description.{PuppetDescription, PuppeteerDescription}
+import fr.linkit.api.connection.cache.repo.description.PuppeteerInfo
 import fr.linkit.api.connection.cache.repo.PuppetWrapper
 import fr.linkit.api.connection.cache.repo.Puppeteer
 import fr.linkit.api.local.system.AppLogger
-import fr.linkit.engine.connection.cache.repo.PuppetAlreadyInitialisedException
-import fr.linkit.engine.connection.cache.repo.generation.{WrapperInstantiator, AbstractPuppetWrapper}
+import fr.linkit.engine.connection.cache.repo.{AbstractPuppetWrapper, PuppetAlreadyInitialisedException}
+import fr.linkit.engine.connection.cache.repo.generation.CloneHelper
 import fr.linkit.engine.local.utils.JavaUtils.nl
 import fr.linkit.engine.local.utils.ScalaUtils
 
@@ -37,12 +37,16 @@ class Puppet$WrappedClassSimpleName$$TParamsIn$ extends AbstractPuppetWrapper[$W
     //They does not affect abstraction or classes behaviors.
     //Override annotations are removed at compilation.
 
-    override def getWrappedClass: Class[_] = classOf[$WrappedClassSimpleName$$TParamsInBusted$]
+    override def wrappedClass: Class[_] = Puppet$WrappedClassSimpleName$.WrappedClass
 
 !!INHERITED_METHODS!! {
     $Override$ def $MethodName$$GenericTypesIn$$ParamsIn$: $ReturnType$ = {
-        println("INVOKING $MethodName$ !")
-        handleCall[$ReturnType$]($MethodID$, $DefaultReturnValue$, $InvokeOnlyResult$)(Array($ParamsOutArray$))(Array(this, $ParamsOutArray$): Any)
+        handleCall[$ReturnType$]($MethodID$, $DefaultReturnValue$)(Array($ParamsOutArray$))(Array(this, $ParamsOutArray$): Any)
     }
 }
+
+}
+
+object Puppet$WrappedClassSimpleName$ {
+    val WrappedClass: Class[_] = classOf[$WrappedClassSimpleName$$TParamsInBusted$]
 }

@@ -37,8 +37,8 @@ dependencies {
     testImplementation 'org.mockito:mockito-inline:3.7.7'
     testImplementation 'org.mockito:mockito-junit-jupiter:3.7.7'
 
-    api group: 'org.scala-lang', name: 'scala-reflect', version: '2.13.5'
-    api group: 'org.scala-lang', name: 'scala-library', version: '2.13.5'
+    api group: 'org.scala-lang', name: 'scala-reflect', version: '2.13.6'
+    api group: 'org.scala-lang', name: 'scala-library', version: '2.13.6'
     implementation group: 'org.scala-lang', name: 'scala-compiler', version: '2.13.6'
 
     implementation group: 'org.jetbrains', name: 'annotations', version: '16.0.1'

@@ -58,7 +58,7 @@ object ObjectNode {
             val children = context.listNodes[Any](profile, t)
             //println(s"children = ${children}")
 
-            val classType = desc.classSignature
+            val classType = desc.classCode
             //println(s"t.getClass.getName.hashCode = ${t.getClass.getName.hashCode}")
             //println(s"classType = ${toPresentableString(classType)}")
             //println(s"NumberSerializer.deserializeInt(classType) = ${NumberSerializer.deserializeInt(classType, 0)}")

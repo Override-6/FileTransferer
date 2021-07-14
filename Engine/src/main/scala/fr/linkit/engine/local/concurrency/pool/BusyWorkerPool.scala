@@ -16,8 +16,8 @@ import fr.linkit.api.local.concurrency._
 import fr.linkit.api.local.system.AppLogger
 import fr.linkit.engine.local.concurrency.{SimpleAsyncTask, now, timedPark}
 
+import java.util.concurrent._
 import java.util.concurrent.locks.LockSupport
-import java.util.concurrent.{BlockingQueue, Executors, ThreadFactory, ThreadPoolExecutor}
 import scala.collection.mutable.ListBuffer
 import scala.util.Try
 import scala.util.control.NonFatal
@@ -86,13 +86,13 @@ class BusyWorkerPool(initialThreadCount: Int, val name: String) extends WorkerPo
     if (initialThreadCount <= 0)
         throw new IllegalArgumentException(s"Worker pool '$name' must contain at least 1 thread, provided: '$initialThreadCount'")
 
+    private val workQueue = new LinkedBlockingQueue[Runnable]()
     //private val choreographer = new Choreographer(this)
-    private val executor = Executors.newFixedThreadPool(initialThreadCount, getThreadFactory).asInstanceOf[ThreadPoolExecutor]
+    private val executor  = new ThreadPoolExecutor(initialThreadCount, initialThreadCount, 0, TimeUnit.MILLISECONDS, workQueue, getThreadFactory)
 
     //The extracted workQueue of the executor which contains all the tasks to execute
-    private val workQueue = executor.getQueue
-    private val workers   = ListBuffer.empty[WorkerThread]
-    private var closed    = false
+    private val workers = ListBuffer.empty[WorkerThread]
+    private var closed  = false
 
     //additional values for debugging
     @volatile private var activeThreads = 0
@@ -350,7 +350,7 @@ class BusyWorkerPool(initialThreadCount: Int, val name: String) extends WorkerPo
         try {
             task
         } catch {
-            case NonFatal(e) =>
+            case NonFatal(e)  =>
                 e.printStackTrace()
             case e: Throwable =>
                 e.printStackTrace()

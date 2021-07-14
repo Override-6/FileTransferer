@@ -15,8 +15,8 @@ import java.lang.reflect.Field
 
 trait SerializableClassDescription {
     val serializableFields: List[Field]
-    val signItemCount     : Int
-    val classSignature    : Array[Byte]
+    val signItemCount: Int
+    val classCode    : Array[Byte]
 
     def foreachDeserializableFields(action: (Int, Field) => Unit): Unit
 }

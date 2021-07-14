@@ -10,7 +10,7 @@
  *  questions.
  */
 
-package fr.linkit.api.connection.cache.repo.annotations;
+package fr.linkit.api.connection.cache.repo.description.annotation;
 
 public enum InvocationKind {
 

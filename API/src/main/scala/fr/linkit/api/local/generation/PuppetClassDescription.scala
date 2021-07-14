@@ -12,6 +12,21 @@
 
 package fr.linkit.api.local.generation
 
-trait ClassDescription {
+import fr.linkit.api.connection.cache.repo.description.{FieldDescription, MethodDescription}
 
+import scala.reflect.runtime.universe.Type
+
+trait PuppetClassDescription[A] {
+
+    val classType: Type
+
+    val clazz: Class[A]
+
+    def listMethods(): Iterable[MethodDescription]
+
+    def getMethodDescription(methodID: Int): Option[MethodDescription]
+
+    def listFields(): Seq[FieldDescription]
+
+    def getFieldDescription(fieldID: Int): Option[FieldDescription]
 }

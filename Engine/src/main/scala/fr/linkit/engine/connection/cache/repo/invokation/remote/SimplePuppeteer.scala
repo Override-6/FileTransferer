@@ -10,28 +10,27 @@
  *  questions.
  */
 
-package fr.linkit.engine.connection.cache.repo
+package fr.linkit.engine.connection.cache.repo.invokation.remote
 
 import fr.linkit.api.connection.cache.repo._
-import fr.linkit.api.connection.cache.repo.annotations.InvocationKind
-import fr.linkit.api.connection.cache.repo.description.{PuppetDescription, PuppeteerDescription}
-import fr.linkit.api.connection.cache.repo.description.PuppetDescription.MethodDescription
+import fr.linkit.api.connection.cache.repo.description.annotation.InvocationKind
+import fr.linkit.api.connection.cache.repo.description.{MethodBehavior, PuppeteerInfo, WrapperBehavior}
 import fr.linkit.api.connection.packet.channel.ChannelScope
 import fr.linkit.api.connection.packet.channel.ChannelScope.ScopeFactory
 import fr.linkit.api.local.system.AppLogger
+import fr.linkit.engine.connection.cache.repo.invokation.local.ObjectChip
 import fr.linkit.engine.connection.cache.repo.tree.PuppetNode
+import fr.linkit.engine.connection.cache.repo.{NoSuchPuppetException, ThrowableWrapper}
 import fr.linkit.engine.connection.packet.fundamental.RefPacket
 import fr.linkit.engine.connection.packet.traffic.ChannelScopes
 import fr.linkit.engine.connection.packet.traffic.channel.request.RequestPacketChannel
 
 import java.util.concurrent.ThreadLocalRandom
-import scala.reflect.ClassTag
-import scala.reflect.runtime.universe._
 
 class SimplePuppeteer[S](channel: RequestPacketChannel,
                          override val repo: EngineObjectCenter[_],
-                         override val puppeteerDescription: PuppeteerDescription,
-                         val puppetDescription: PuppetDescription[S]) extends Puppeteer[S] {
+                         override val puppeteerDescription: PuppeteerInfo,
+                         val wrapperBehavior: WrapperBehavior[S]) extends Puppeteer[S] {
 
     override val ownerID     : String                  = puppeteerDescription.owner
     private  val bcScope                               = prepareScope(ChannelScopes.discardCurrent)
@@ -43,14 +42,14 @@ class SimplePuppeteer[S](channel: RequestPacketChannel,
     override def getPuppetWrapper: S with PuppetWrapper[S] = puppetWrapper
 
     override def sendInvokeAndWaitResult[R](methodId: Int, args: Array[Array[Any]]): R = {
-        val desc = puppetDescription.getMethodDesc(methodId).getOrElse {
+        val bhv = wrapperBehavior.getMethodBehavior(methodId).getOrElse {
             throw new NoSuchMethodException(s"Remote method not found for id '$methodId'")
         }
 
-        AppLogger.debug(s"Remotely invoking method ${desc.symbol.name}(${args.mkString(",")})")
+        AppLogger.debug(s"Remotely invoking method ${bhv.desc.symbol.name}")
         val treeViewPath = puppeteerDescription.treeViewPath
-        val result       = channel.makeRequest(chooseScope(desc.invocationKind))
-                .addPacket(InvocationPacket(treeViewPath, methodId, synchronizedArgs(desc, args)))
+        val result       = channel.makeRequest(chooseScope(bhv.invocationKind))
+                .addPacket(InvocationPacket(treeViewPath, methodId, synchronizedArgs(bhv, args)))
                 .submit()
                 .nextResponse
                 .nextPacket[RefPacket[R]].value
@@ -62,31 +61,17 @@ class SimplePuppeteer[S](channel: RequestPacketChannel,
     }
 
     override def sendInvoke(methodId: Int, args: Array[Array[Any]]): Unit = {
-        val desc = puppetDescription.getMethodDesc(methodId).getOrElse {
+        val bhv = wrapperBehavior.getMethodBehavior(methodId).getOrElse {
             throw new NoSuchMethodException(s"Remote method not found for id '$methodId'")
         }
-        AppLogger.debug(s"Remotely invoking method ${desc.symbol.name}(${args.mkString(",")})")
+        AppLogger.debug(s"Remotely invoking method ${bhv.desc.symbol.name}(${args.mkString(",")})")
 
-        if (!desc.isHidden) {
-            channel.makeRequest(chooseScope(desc.invocationKind))
+        if (!bhv.isHidden) {
+            channel.makeRequest(chooseScope(bhv.invocationKind))
                     .addPacket(InvocationPacket(puppeteerDescription.treeViewPath, methodId, args))
                     .submit()
                     .detach()
         }
-    }
-
-    override def sendFieldUpdate(fieldId: Int, newValue: Any): Unit = {
-        AppLogger.vDebug(s"Remotely associating field '${
-            puppetDescription.getFieldDesc(fieldId).get.fieldGetter.name
-        }' to value $newValue.")
-        val desc  = puppetDescription.getFieldDesc(fieldId).getOrElse {
-            throw new NoSuchMethodException(s"Remote field not found for id '$fieldId'")
-        }
-        val value = if (desc.isSynchronized) synchronizedObj(newValue) else newValue
-        channel.makeRequest(bcScope)
-                .addPacket(InvocationPacket(puppeteerDescription.treeViewPath, fieldId, Array(Array(value))))
-                .submit()
-                .detach()
     }
 
     override def init(wrapper: S with PuppetWrapper[S]): Unit = {
@@ -106,7 +91,7 @@ class SimplePuppeteer[S](channel: RequestPacketChannel,
         }
     }
 
-    private def synchronizedArgs(desc: MethodDescription, args: Array[Array[Any]]): Array[Array[Any]] = {
+    private def synchronizedArgs(desc: MethodBehavior, args: Array[Array[Any]]): Array[Array[Any]] = {
         desc.synchronizedParams
                 .zip(args)
                 .map(pair => if (pair._1) pair._2.map(synchronizedObj) else pair._2)
@@ -114,15 +99,15 @@ class SimplePuppeteer[S](channel: RequestPacketChannel,
     }
 
     private def synchronizedObj(obj: Any): Any = {
-        val id           = ThreadLocalRandom.current().nextInt()
-        val currentPath  = puppeteerDescription.treeViewPath
-        val objPath      = currentPath ++ Array(id)
-        val descriptions = repo.descriptions
-        val isIntended   = channel.traffic.supportIdentifier == ownerID
-        repo.genSynchronizedObject(objPath, obj, ownerID, descriptions) {
+        val id          = ThreadLocalRandom.current().nextInt()
+        val currentPath = puppeteerDescription.treeViewPath
+        val objPath     = currentPath ++ Array(id)
+        val defaults    = repo.defaultTreeViewBehavior
+        val isIntended  = channel.traffic.supportIdentifier == ownerID
+        repo.genSynchronizedObject(objPath, obj, ownerID, defaults) {
             (wrapper, childPath) =>
                 val id          = childPath.last
-                val description = repo.getPuppetDescFromClass(wrapper.getClass)
+                val description = repo.defaultTreeViewBehavior.getFromClass(wrapper.getClass)
                 repo.center
                         .getNode(currentPath).get
                         .getGrandChild(childPath
@@ -130,9 +115,9 @@ class SimplePuppeteer[S](channel: RequestPacketChannel,
                                 .dropRight(1))
                         .fold(throw new NoSuchPuppetException(s"Puppet Node not found in path ${childPath.mkString("$", " -> ", "")}")) {
                             parent =>
-                                val chip      = ObjectChip[Any](ownerID, description, wrapper.asInstanceOf[PuppetWrapper[Any]])
+                                val chip      = ObjectChip[Any](ownerID, description.asInstanceOf[WrapperBehavior[Any]], wrapper.asInstanceOf[PuppetWrapper[Any]])
                                 val puppeteer = wrapper.getPuppeteer.asInstanceOf[Puppeteer[Any]]
-                                parent.addChild(id, new PuppetNode(puppeteer, chip, descriptions, isIntended, id, _))
+                                parent.addChild(id, new PuppetNode(puppeteer, chip, defaults, isIntended, id, _))
                         }
         }
     }

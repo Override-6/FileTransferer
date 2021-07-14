@@ -10,14 +10,10 @@
  *  questions.
  */
 
-package fr.linkit.engine.connection.cache.repo.tree
+package fr.linkit.api.connection.cache.repo.description.annotation;
 
-import fr.linkit.api.connection.cache.repo.tree.SyncNode
-import fr.linkit.engine.connection.cache.repo.invokation.remote.InvocationPacket
-import fr.linkit.engine.connection.packet.traffic.channel.request.ResponseSubmitter
+public @interface FieldControl {
 
-trait MemberSyncNode[A] extends SyncNode[A]{
-
-    def handlePacket(packet: InvocationPacket, response: ResponseSubmitter): Unit
+    boolean synchronize() default false;
 
 }

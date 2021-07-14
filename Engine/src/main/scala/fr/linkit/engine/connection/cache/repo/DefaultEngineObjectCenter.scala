@@ -13,16 +13,19 @@
 package fr.linkit.engine.connection.cache.repo
 
 import fr.linkit.api.connection.cache.repo._
-import fr.linkit.api.connection.cache.repo.description.{PuppetDescription, PuppetDescriptions, PuppeteerDescription}
+import fr.linkit.api.connection.cache.repo.description.{PuppeteerInfo, TreeViewBehavior, WrapperBehavior}
 import fr.linkit.api.connection.cache.repo.generation.PuppetWrapperGenerator
 import fr.linkit.api.connection.cache.{CacheContent, InternalSharedCache, SharedCacheFactory, SharedCacheManager}
-import fr.linkit.api.connection.network.Engine
 import fr.linkit.api.connection.packet.Packet
 import fr.linkit.api.connection.packet.traffic.PacketInjectableContainer
 import fr.linkit.api.local.system.AppLogger
 import fr.linkit.engine.connection.cache.AbstractSharedCache
 import fr.linkit.engine.connection.cache.repo.DefaultEngineObjectCenter.{FieldRestorer, PuppetProfile}
-import fr.linkit.engine.connection.cache.repo.generation.{PuppetWrapperClassGenerator, WrapperInstantiator, WrappersClassResource}
+import fr.linkit.engine.connection.cache.repo.description.TreeViewDefaultBehaviors
+import fr.linkit.engine.connection.cache.repo.description.annotation.AnnotationBasedMemberBehaviorFactory
+import fr.linkit.engine.connection.cache.repo.generation.{CloneHelper, PuppetWrapperClassGenerator, WrappersClassResource}
+import fr.linkit.engine.connection.cache.repo.invokation.local.{ObjectChip, SimpleRMIHandler}
+import fr.linkit.engine.connection.cache.repo.invokation.remote.{InvocationPacket, SimplePuppeteer}
 import fr.linkit.engine.connection.cache.repo.tree.{DefaultPuppetCenter, MemberSyncNode, PuppetNode}
 import fr.linkit.engine.connection.packet.fundamental.RefPacket.{ObjectPacket, StringPacket}
 import fr.linkit.engine.connection.packet.traffic.ChannelScopes
@@ -35,37 +38,36 @@ import java.lang.reflect.Field
 import java.util.concurrent.ThreadLocalRandom
 import scala.collection.mutable
 import scala.reflect.ClassTag
+import scala.reflect.runtime.universe
 import scala.reflect.runtime.universe._
 
 class DefaultEngineObjectCenter[A <: Serializable](handler: SharedCacheManager,
                                                    cacheID: Int,
                                                    channel: RequestPacketChannel,
                                                    generator: PuppetWrapperGenerator,
-                                                   override val descriptions: PuppetDescriptions)
+                                                   override val defaultTreeViewBehavior: TreeViewBehavior)
         extends AbstractSharedCache(handler, cacheID, channel) with EngineObjectCenter[A] {
+
+    import defaultTreeViewBehavior._
 
     override val center                = new DefaultPuppetCenter[A]
     private  val fieldRestorer         = new FieldRestorer
     private  val supportIdentifier     = channel.traffic.supportIdentifier
     private  val generatedClassesNames = mutable.HashSet.empty[String]
 
-    override def getPuppetDescription[B <: A : ClassTag : TypeTag]: PuppetDescription[B] = {
-        descriptions.getDescription[B]
+    override def postObject[B <: A : ClassTag : TypeTag](id: Int, obj: B): B with PuppetWrapper[B] = {
+        postObject[B](id, obj, defaultTreeViewBehavior.getFromClass(obj.getClass.asInstanceOf[Class[B]]))
     }
 
-    override def getPuppetDescFromClass[B](clazz: Class[B]): PuppetDescription[B] = {
-        descriptions.getDescFromClass(clazz)
-    }
-
-    override def postObject[B <: A : ClassTag : TypeTag](id: Int, snapshot: B): B with PuppetWrapper[B] = {
-        ensureNotWrapped(snapshot)
+    override def postObject[B <: A : ClassTag : universe.TypeTag](id: Int, obj: B, behavior: WrapperBehavior[B]): B with PuppetWrapper[B] = {
+        ensureNotWrapped(obj)
         if (isRegistered(id))
             throw new ObjectAlreadyPostException(s"Another object with id '$id' figures in the repo's list.")
 
         val path    = Array(id)
-        val wrapper = localRegisterRemotePuppet[B](Array(id), supportIdentifier, snapshot)
+        val wrapper = localRegisterRemotePuppet[B](Array(id), supportIdentifier, obj, behavior)
         channel.makeRequest(ChannelScopes.discardCurrent)
-                .addPacket(ObjectPacket(PuppetProfile(path, snapshot, supportIdentifier)))
+                .addPacket(ObjectPacket(PuppetProfile(path, obj, supportIdentifier)))
                 .putAllAttributes(this)
                 .submit()
 
@@ -81,11 +83,14 @@ class DefaultEngineObjectCenter[A <: Serializable](handler: SharedCacheManager,
     }
 
     override def initPuppetWrapper[B <: A](wrapper: B with PuppetWrapper[B]): Unit = {
+        initPuppetWrapper(wrapper, getFromClass[B](wrapper.getWrappedClass))
+    }
+
+    override def initPuppetWrapper[B <: A](wrapper: B with PuppetWrapper[B], behavior: WrapperBehavior[B]): Unit = {
         if (wrapper.isInitialized)
             return
         val puppeteerDesc = wrapper.getPuppeteerDescription
-        val wrappedClass = wrapper.getWrappedClass.asInstanceOf[Class[B]]
-        val puppeteer     = new SimplePuppeteer[B](channel, this, puppeteerDesc, getPuppetDescFromClass[B](wrappedClass))
+        val puppeteer     = new SimplePuppeteer[B](channel, this, puppeteerDesc, behavior)
         wrapper.initPuppeteer(puppeteer)
     }
 
@@ -107,7 +112,7 @@ class DefaultEngineObjectCenter[A <: Serializable](handler: SharedCacheManager,
                     .submit()
             generatedClassesNames += puppetClassName
         }
-        val instance = WrapperInstantiator.instantiateFromOrigin[B](wrapperClass, puppet)
+        val instance = CloneHelper.instantiateFromOrigin[B](wrapperClass, puppet)
         instance.initPuppeteer(puppeteer)
         instance
     }
@@ -121,7 +126,8 @@ class DefaultEngineObjectCenter[A <: Serializable](handler: SharedCacheManager,
                 if (!isRegistered(profile.treeViewPath)) {
                     val puppet = profile.puppet
                     fieldRestorer.restoreFields(puppet)
-                    localRegisterRemotePuppet(profile.treeViewPath, owner, puppet)(ClassTag(puppet.getClass))
+                    val behavior = defaultTreeViewBehavior.getFromClass(puppet.getClass).asInstanceOf[WrapperBehavior[A]]
+                    localRegisterRemotePuppet(profile.treeViewPath, owner, puppet, behavior)(ClassTag(puppet.getClass))
                 }
             case StringPacket(puppetClassName)           =>
                 generator.getPuppetClass(Class.forName(puppetClassName))
@@ -148,7 +154,7 @@ class DefaultEngineObjectCenter[A <: Serializable](handler: SharedCacheManager,
     override def genSynchronizedObject[B: ClassTag](treeViewPath: Array[Int],
                                                     obj: B,
                                                     owner: String,
-                                                    descriptions: PuppetDescriptions)(foreachSyncObjAction: (PuppetWrapper[_ <: Any], Array[Int]) => Unit): B with PuppetWrapper[B] = {
+                                                    behaviors: TreeViewBehavior)(foreachSyncObjAction: (PuppetWrapper[_ <: Any], Array[Int]) => Unit): B with PuppetWrapper[B] = {
         ensureNotWrapped(obj)
 
         if (treeViewPath.isEmpty)
@@ -157,20 +163,19 @@ class DefaultEngineObjectCenter[A <: Serializable](handler: SharedCacheManager,
         if (obj == null)
             throw new NullPointerException
 
-        val puppetDesc    = descriptions.getDescFromClass[B](obj.getClass.asInstanceOf[Class[B]])
-        val puppeteerDesc = PuppeteerDescription(family, cacheID, owner, treeViewPath)
-        val puppeteer     = new SimplePuppeteer[B](channel, this, puppeteerDesc, puppetDesc)
-        val wrapper       = genPuppetWrapper[B](puppeteer, obj)
+        val wrapperBehavior = behaviors.getFromClass[B](obj.getClass.asInstanceOf[Class[B]])
+        val puppeteerDesc   = PuppeteerInfo(family, cacheID, owner, treeViewPath)
+        val puppeteer       = new SimplePuppeteer[B](channel, this, puppeteerDesc, wrapperBehavior)
+        val wrapper         = genPuppetWrapper[B](puppeteer, obj)
         foreachSyncObjAction(wrapper, treeViewPath)
-        val mirror = runtimeMirror(puppetDesc.loader).reflect(wrapper)
-        for (desc <- puppetDesc.listFields() if desc.isSynchronized) {
+        for (bhv <- wrapperBehavior.listField() if bhv.isSynchronized) {
 
             val id            = ThreadLocalRandom.current().nextInt()
-            val field         = desc.fieldGetter
-            val fieldValue    = mirror.reflectMethod(field)()
+            val field         = bhv.desc.javaField
+            val fieldValue    = field.get(obj)
             val childTreePath = treeViewPath ++ Array(id)
-            val syncObject    = genSynchronizedObject(childTreePath, fieldValue, owner, descriptions)(foreachSyncObjAction)(ClassTag(fieldValue.getClass))
-            mirror.reflectMethod(field.setter.asMethod)(syncObject)
+            val syncValue     = genSynchronizedObject(childTreePath, fieldValue, owner, behaviors)(foreachSyncObjAction)(ClassTag(fieldValue.getClass))
+            field.set(obj, syncValue)
         }
         wrapper
     }
@@ -188,36 +193,38 @@ class DefaultEngineObjectCenter[A <: Serializable](handler: SharedCacheManager,
             if (owner == supportIdentifier) {
                 center.getNode[A](path).fold {
                     throw new IllegalArgumentException(s"Unknown local object of path '${path.mkString("$", " -> ", "")}'")
-                }(_.chip.updateAllFields(puppet))
+                }(_.chip.updateObject(puppet))
             }
             //it's an object that must be remotely controlled because it is chipped by another objects cache.
             else if (!isRegistered(path)) {
-                localRegisterRemotePuppet(path, owner, puppet)(ClassTag(puppet.getClass))
+                val behavior = defaultTreeViewBehavior.getFromClass(puppet.getClass).asInstanceOf[WrapperBehavior[A]]
+                localRegisterRemotePuppet(path, owner, puppet, behavior)(ClassTag(puppet.getClass))
             }
         })
     }
 
-    private def localRegisterRemotePuppet[B <: A : ClassTag](path: Array[Int], owner: String, puppet: B): B with PuppetWrapper[B] = {
+    private def localRegisterRemotePuppet[B <: A : ClassTag](path: Array[Int], owner: String, puppet: B, behavior: WrapperBehavior[B]): B with PuppetWrapper[B] = {
         val isIntended = owner == supportIdentifier
 
         var parent        = center.getNode[B](path)
-        val wrappedPuppet = genSynchronizedObject(path, puppet, owner, descriptions) {
+        val treeViewBehavior = behavior.treeView
+        val wrappedPuppet = genSynchronizedObject(path, puppet, owner, treeViewBehavior) {
             (wrapper, childPath) =>
                 val id          = childPath.last
-                val description = wrapper.getPuppetDescription.asInstanceOf[PuppetDescription[B]]
+                val description = wrapper.getBehavior
                 parent.fold {
                     val rootWrapper = wrapper.asInstanceOf[B with PuppetWrapper[B]]
-                    val chip        = ObjectChip[B](owner, description, rootWrapper)
-                    val parentNode  = new PuppetNode[B](rootWrapper.getPuppeteer, chip, descriptions, isIntended, id, null)
+                    val chip        = ObjectChip[B](owner, rootWrapper.getBehavior, rootWrapper)
+                    val parentNode  = new PuppetNode[B](rootWrapper.getPuppeteer, chip, treeViewBehavior, isIntended, id, null)
                     center.addPuppet(path, _ => parentNode)
                     parent = Some(parentNode)
                 } { parentNode =>
                     parentNode.getGrandChild(childPath.drop(path.length).dropRight(1))
                             .fold(throw new NoSuchPuppetException(s"Puppet Node not found in path ${childPath.mkString("$", " -> ", "")}")) {
                                 parent =>
-                                    val chip      = ObjectChip[Any](owner, description, wrapper.asInstanceOf[Any with PuppetWrapper[Any]])
+                                    val chip      = ObjectChip[Any](owner, description.asInstanceOf[WrapperBehavior[Any]], wrapper.asInstanceOf[Any with PuppetWrapper[Any]])
                                     val puppeteer = wrapper.getPuppeteer.asInstanceOf[Puppeteer[Any]]
-                                    parent.addChild(id, new PuppetNode(puppeteer, chip, descriptions, isIntended, id, _))
+                                    parent.addChild(id, new PuppetNode(puppeteer, chip, treeViewBehavior, isIntended, id, _))
                             }
                 }
         }
@@ -230,14 +237,19 @@ object DefaultEngineObjectCenter {
 
     private val ClassesResourceDirectory = LinkitApplication.getProperty("compilation.working_dir.classes")
 
-    def apply[A <: Serializable : ClassTag](descriptions: PuppetDescriptions = PuppetDescriptions.getDefault): SharedCacheFactory[DefaultEngineObjectCenter[A] with InternalSharedCache] = {
+    def apply[A <: Serializable : ClassTag](): SharedCacheFactory[DefaultEngineObjectCenter[A] with InternalSharedCache] = {
+        val treeView = new TreeViewDefaultBehaviors(AnnotationBasedMemberBehaviorFactory(SimpleRMIHandler))
+        apply[A](treeView)
+    }
+
+    def apply[A <: Serializable : ClassTag](behaviors: TreeViewBehavior): SharedCacheFactory[DefaultEngineObjectCenter[A] with InternalSharedCache] = {
         (handler: SharedCacheManager, identifier: Int, container: PacketInjectableContainer) => {
             val channel   = container.getInjectable(5, ChannelScopes.discardCurrent, RequestPacketChannel)
             val context   = handler.network.connection.getApp
             val resources = context.getAppResources.getOrOpenThenRepresent[WrappersClassResource](ClassesResourceDirectory)
             val generator = new PuppetWrapperClassGenerator(context.compilerCenter, resources)
 
-            new DefaultEngineObjectCenter[A](handler, identifier, channel, generator, descriptions)
+            new DefaultEngineObjectCenter[A](handler, identifier, channel, generator, behaviors)
         }
     }
 

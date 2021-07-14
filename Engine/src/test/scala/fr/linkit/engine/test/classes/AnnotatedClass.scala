@@ -12,7 +12,7 @@
 
 package fr.linkit.engine.test.classes
 
-import fr.linkit.api.connection.cache.repo.annotations.{InvocationKind, MethodControl}
+import fr.linkit.api.connection.cache.repo.description.annotation.{InvocationKind, MethodControl}
 
 @MethodControl(value = InvocationKind.ONLY_LOCAL, pure = false, mutates =  "arg2")
 class AnnotatedClass {

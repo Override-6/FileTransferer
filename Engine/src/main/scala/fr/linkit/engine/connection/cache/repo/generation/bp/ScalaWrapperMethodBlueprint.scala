@@ -12,7 +12,7 @@
 
 package fr.linkit.engine.connection.cache.repo.generation.bp
 
-import fr.linkit.api.connection.cache.repo.description.PuppetDescription.MethodDescription
+import fr.linkit.api.connection.cache.repo.description.MethodDescription
 import fr.linkit.api.local.generation.compilation.access.CompilerType
 import fr.linkit.engine.connection.cache.repo.generation.bp.ScalaBlueprintUtilities._
 import fr.linkit.engine.connection.cache.repo.generation.bp.ScalaWrapperMethodBlueprint.ValueScope
@@ -39,7 +39,6 @@ object ScalaWrapperMethodBlueprint {
         bindValue("GenericTypesOut" ~> getGenericParamsOut)
         bindValue("MethodName" ~> (_.symbol.name.toString))
         bindValue("MethodID" ~> (_.methodId.toString))
-        bindValue("InvokeOnlyResult" ~> (_.getDefaultReturnValue))
         bindValue("ParamsIn" ~> (getParameters(_)(_.mkString("(", ", ", ")"), _.mkString(""), true, false)))
         bindValue("ParamsOut" ~> (getParameters(_)(_.mkString("(", ", ", ")"), _.mkString(""), false, true)))
         bindValue("ParamsOutArray" ~> (getParameters(_)(_.mkString(", "), _.mkString("Array[Any](", ", ", ")"), false, false)))
@@ -49,7 +48,7 @@ object ScalaWrapperMethodBlueprint {
 
     private def chooseOverride(desc: MethodDescription): String = {
         val symbol = desc.symbol
-        val owner = symbol
+        val owner  = symbol
                 .overrides
                 .lastOption
                 .map(_.owner)

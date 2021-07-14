@@ -12,7 +12,7 @@
 
 package fr.linkit.api.connection.cache.repo
 
-import fr.linkit.api.connection.cache.repo.description.{PuppetDescription, PuppetDescriptions}
+import fr.linkit.api.connection.cache.repo.description.{TreeViewBehavior, WrapperBehavior}
 import fr.linkit.api.connection.cache.repo.tree.PuppetCenter
 import fr.linkit.api.connection.packet.PacketAttributesPresence
 
@@ -23,11 +23,11 @@ trait EngineObjectCenter[A <: Serializable] extends ObjectSynchronizer with Pack
 
     val center: PuppetCenter[A]
 
-    val descriptions: PuppetDescriptions
-
-    def getPuppetDescription[B <: A : ClassTag : TypeTag]: PuppetDescription[B]
+    val defaultTreeViewBehavior: TreeViewBehavior
 
     def postObject[B <: A : ClassTag : TypeTag](id: Int, obj: B): B with PuppetWrapper[B]
+
+    def postObject[B <: A : ClassTag : TypeTag](id: Int, obj: B, behavior: WrapperBehavior[B]): B with PuppetWrapper[B]
 
     def findObject[B <: A](id: Int): Option[B with PuppetWrapper[B]]
 
@@ -37,5 +37,5 @@ trait EngineObjectCenter[A <: Serializable] extends ObjectSynchronizer with Pack
 
     def isRegistered(id: Int): Boolean
 
-    def getPuppetDescFromClass[B](clazz: Class[B]): PuppetDescription[B]
+    def initPuppetWrapper[B <: A](wrapper: B with PuppetWrapper[B], behavior: WrapperBehavior[B]): Unit
 }

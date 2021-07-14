@@ -10,14 +10,12 @@
  *  questions.
  */
 
-package fr.linkit.engine.connection.cache.repo.tree
+package fr.linkit.api.connection.cache.repo.description
 
-import fr.linkit.api.connection.cache.repo.tree.SyncNode
-import fr.linkit.engine.connection.cache.repo.invokation.remote.InvocationPacket
-import fr.linkit.engine.connection.packet.traffic.channel.request.ResponseSubmitter
+trait MemberBehaviorFactory {
 
-trait MemberSyncNode[A] extends SyncNode[A]{
+    def genMethodBehavior(desc: MethodDescription): MethodBehavior
 
-    def handlePacket(packet: InvocationPacket, response: ResponseSubmitter): Unit
+    def genFieldBehavior(desc: FieldDescription): FieldBehavior
 
 }

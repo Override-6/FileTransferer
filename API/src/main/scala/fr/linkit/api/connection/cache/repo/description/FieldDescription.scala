@@ -10,20 +10,19 @@
  *  questions.
  */
 
-package fr.linkit.engine.test.classes;
+package fr.linkit.api.connection.cache.repo.description
 
-public class JavaClass<AS> {
+import fr.linkit.api.local.generation.PuppetClassDescription
 
-    static class A extends JavaClass<String> {
-        public JavaClass<String> test(JavaClass<String> test) {
-            return this;
-        }
-    }
+import java.lang.reflect.Field
+import scala.reflect.runtime.universe.MethodSymbol
 
-    static class B extends A {
-        @Override
-        public B test(JavaClass<String> test) {
-            return this;
-        }
+case class FieldDescription(fieldGetter: MethodSymbol,
+                            classDesc: PuppetClassDescription[_]) {
+
+    val javaField: Field = classDesc.clazz.getDeclaredField(fieldGetter.name.toString)
+
+    val fieldId: Int = {
+        fieldGetter.hashCode() + fieldGetter.returnType.hashCode()
     }
 }

@@ -12,8 +12,9 @@
 
 package fr.linkit.engine.connection.cache.repo.generation
 
-import fr.linkit.api.connection.cache.repo.description.PuppetDescription
+import fr.linkit.api.connection.cache.repo.PuppetWrapper
 import fr.linkit.api.connection.cache.repo.generation.GeneratedClassClassLoader
+import fr.linkit.api.local.generation.PuppetClassDescription
 import fr.linkit.api.local.generation.cbp.ClassBlueprint
 import fr.linkit.api.local.generation.compilation.CompilationResult
 import fr.linkit.api.local.generation.compilation.access.CompilerType
@@ -30,12 +31,12 @@ import fr.linkit.engine.local.mapping.ClassMappings
 import java.io.File
 import java.nio.file.{Files, Path}
 
-class WrapperCompilationRequestFactory extends AbstractCompilationRequestFactory[PuppetDescription[_], Class[_]] {
+class WrapperCompilationRequestFactory extends AbstractCompilationRequestFactory[PuppetClassDescription[_], Class[PuppetWrapper[_]]] {
 
-    var classBlueprint: ClassBlueprint[PuppetDescription[_]] = DefaultClassBlueprint
+    var classBlueprint: ClassBlueprint[PuppetClassDescription[_]] = DefaultClassBlueprint
 
-    override def createMultiRequest(contexts: Seq[PuppetDescription[_]], workingDir: Path): SourceCodeCompilationRequest[Seq[Class[_]]] = {
-        new SourceCodeCompilationRequest[Seq[Class[_]]] { req =>
+    override def createMultiRequest(contexts: Seq[PuppetClassDescription[_]], workingDir: Path): SourceCodeCompilationRequest[Seq[Class[PuppetWrapper[_]]]] = {
+        new SourceCodeCompilationRequest[Seq[Class[PuppetWrapper[_]]]] { req =>
 
             override val workingDirectory: Path              = workingDir
             override val classPaths      : Seq[Path]         = defaultClassPaths :+ classDir
@@ -44,9 +45,9 @@ class WrapperCompilationRequestFactory extends AbstractCompilationRequestFactory
                 contexts.flatMap(getSourceCode)
             }
 
-            override def conclude(outs: Seq[Path], compilationTime: Long): CompilationResult[Seq[Class[_]]] = {
-                new AbstractCompilationResult[Seq[Class[_]]](outs, compilationTime, req) {
-                    lazy val result: Option[Seq[Class[_]]] = {
+            override def conclude(outs: Seq[Path], compilationTime: Long): CompilationResult[Seq[Class[PuppetWrapper[_]]]] = {
+                new AbstractCompilationResult[Seq[Class[PuppetWrapper[_]]]](outs, compilationTime, req) {
+                    lazy val result: Option[Seq[Class[PuppetWrapper[_]]]] = {
                         Some(contexts
                                 .map { desc =>
                                     val clazz                    = desc.clazz
@@ -60,7 +61,7 @@ class WrapperCompilationRequestFactory extends AbstractCompilationRequestFactory
                                 })
                     }
 
-                    override def getResult: Option[Seq[Class[_]]] = {
+                    override def getResult: Option[Seq[Class[PuppetWrapper[_]]]] = {
                         result
                     }
                 }
@@ -68,7 +69,7 @@ class WrapperCompilationRequestFactory extends AbstractCompilationRequestFactory
         }
     }
 
-    private def getSourceCode(desc: PuppetDescription[_]): IterableOnce[SourceCode] = {
+    private def getSourceCode(desc: PuppetClassDescription[_]): IterableOnce[SourceCode] = {
         val name = desc.clazz.getName
         Seq(SourceCode(adaptClassName(name, WrapperPrefixName), classBlueprint.toClassSource(desc), classBlueprint.compilerType))
     }

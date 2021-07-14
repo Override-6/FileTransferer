@@ -12,7 +12,7 @@
 
 package fr.linkit.api.connection.cache.repo
 
-import fr.linkit.api.connection.cache.repo.description.PuppetDescriptions
+import fr.linkit.api.connection.cache.repo.description.TreeViewBehavior
 
 import scala.reflect.ClassTag
 
@@ -21,5 +21,5 @@ trait ObjectSynchronizer {
     def genSynchronizedObject[B: ClassTag](treeViewPath: Array[Int],
                                            obj: B,
                                            owner: String,
-                                           descriptions: PuppetDescriptions)(foreachSubObjects: (PuppetWrapper[_], Array[Int]) => Unit): B with PuppetWrapper[B]
+                                           descriptions: TreeViewBehavior)(foreachSubObjects: (PuppetWrapper[_], Array[Int]) => Unit): B with PuppetWrapper[B]
 }

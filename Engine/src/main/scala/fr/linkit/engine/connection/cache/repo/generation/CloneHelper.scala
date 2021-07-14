@@ -13,16 +13,9 @@
 package fr.linkit.engine.connection.cache.repo.generation
 
 import fr.linkit.api.connection.cache.repo.PuppetWrapper
-import fr.linkit.engine.local.utils.ScalaUtils
 import fr.linkit.engine.local.utils.ScalaUtils.{allocate, pasteAllFields}
 
-object WrapperInstantiator {
-
-    private val TheUnsafe = ScalaUtils.findUnsafe()
-
-    def instantiate[T <: PuppetWrapper[T]](clazz: Class[T]): T = {
-        allocate[T](clazz)
-    }
+object CloneHelper {
 
     def instantiateFromOrigin[A](wrapperClass: Class[A with PuppetWrapper[A]], origin: A): A with PuppetWrapper[A] = {
         val instance  = allocate[A with PuppetWrapper[A]](wrapperClass)
@@ -30,11 +23,16 @@ object WrapperInstantiator {
         instance
     }
 
-    def detachedClone[A](origin: PuppetWrapper[A]): A = {
-        val instance = allocate[A](origin.getWrappedClass)
+    def clone[A](origin: A): A = {
+        val instance = allocate[A](origin.getClass)
         pasteAllFields(instance, origin)
         instance
     }
 
+    def detachedWrapperClone[A](origin: PuppetWrapper[A]): A = {
+        val instance = allocate[A](origin.getWrappedClass)
+        pasteAllFields(instance, origin)
+        instance
+    }
 
 }

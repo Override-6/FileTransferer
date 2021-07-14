@@ -10,14 +10,15 @@
  *  questions.
  */
 
-package fr.linkit.engine.connection.cache.repo.tree
+package fr.linkit.api.connection.cache.repo.description
 
-import fr.linkit.api.connection.cache.repo.tree.SyncNode
-import fr.linkit.engine.connection.cache.repo.invokation.remote.InvocationPacket
-import fr.linkit.engine.connection.packet.traffic.channel.request.ResponseSubmitter
+import fr.linkit.api.connection.cache.repo.PuppetWrapper
 
-trait MemberSyncNode[A] extends SyncNode[A]{
+/**
+ *
+ * */
+trait RMIHandler {
 
-    def handlePacket(packet: InvocationPacket, response: ResponseSubmitter): Unit
+    def handleRMI[R](wrapper: PuppetWrapper[_])(id: Int, defaultReturnValue: R)(args: Array[Array[Any]])(superCall: => R = null): R
 
 }

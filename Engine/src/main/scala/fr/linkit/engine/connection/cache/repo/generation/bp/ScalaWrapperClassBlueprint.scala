@@ -12,8 +12,8 @@
 
 package fr.linkit.engine.connection.cache.repo.generation.bp
 
-import fr.linkit.api.connection.cache.repo.description.PuppetDescription
-import fr.linkit.api.connection.cache.repo.description.PuppetDescription.MethodDescription
+import fr.linkit.api.connection.cache.repo.description.MethodDescription
+import fr.linkit.api.local.generation.PuppetClassDescription
 import fr.linkit.api.local.generation.compilation.access.CompilerType
 import fr.linkit.engine.connection.cache.repo.generation.bp.ScalaBlueprintUtilities._
 import fr.linkit.engine.local.generation.cbp.AbstractClassBlueprint
@@ -21,7 +21,7 @@ import fr.linkit.engine.local.generation.compilation.access.CommonCompilerTypes
 
 import java.io.InputStream
 
-class ScalaWrapperClassBlueprint(in: InputStream) extends AbstractClassBlueprint[PuppetDescription[_]](in) {
+class ScalaWrapperClassBlueprint(in: InputStream) extends AbstractClassBlueprint[PuppetClassDescription[_]](in) {
 
     override val compilerType: CompilerType = CommonCompilerTypes.Scalac
 
@@ -37,14 +37,16 @@ class ScalaWrapperClassBlueprint(in: InputStream) extends AbstractClassBlueprint
 
         bindSubScope(new ScalaWrapperMethodBlueprint.ValueScope("INHERITED_METHODS", _, _), (desc, action: MethodDescription => Unit) => {
             desc.listMethods()
+                    .toSeq
                     .distinctBy(_.methodId)
-                   // .filterNot(m => m.symbol.isSetter || m.symbol.isGetter)
+                    // .filterNot(m => m.symbol.isSetter || m.symbol.isGetter)
                     .foreach(action)
         })
 
     }
-    private def getBustedConstructor(desc: PuppetDescription[_]): String = {
-        val v = desc.tpe
+
+    private def getBustedConstructor(desc: PuppetClassDescription[_]): String = {
+        desc.classType
                 .decls
                 .find(dec => dec.isConstructor && (dec.isPublic || dec.isProtected))
                 .fold("") {
@@ -53,8 +55,6 @@ class ScalaWrapperClassBlueprint(in: InputStream) extends AbstractClassBlueprint
                             .map(_.map(_ => "nl").mkString("(", ",", ")"))
                             .mkString(",")
                 }
-        v
     }
-
 
 }

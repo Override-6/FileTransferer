@@ -12,10 +12,12 @@
 
 package fr.linkit.engine.connection.cache.repo.tree
 
-import fr.linkit.api.connection.cache.repo.description.PuppetDescriptions
+import fr.linkit.api.connection.cache.repo.description.{TreeViewBehavior, WrapperBehavior}
 import fr.linkit.api.connection.cache.repo.tree.SyncNode
 import fr.linkit.api.connection.cache.repo.{Chip, PuppetWrapper, Puppeteer}
-import fr.linkit.engine.connection.cache.repo.{InvocationPacket, NoSuchPuppetException, ObjectChip}
+import fr.linkit.engine.connection.cache.repo.NoSuchPuppetException
+import fr.linkit.engine.connection.cache.repo.invokation.local.ObjectChip
+import fr.linkit.engine.connection.cache.repo.invokation.remote.InvocationPacket
 import fr.linkit.engine.connection.packet.UnexpectedPacketException
 import fr.linkit.engine.connection.packet.fundamental.RefPacket
 import fr.linkit.engine.connection.packet.traffic.channel.request.ResponseSubmitter
@@ -27,7 +29,7 @@ import scala.reflect.ClassTag
 
 class PuppetNode[A](override val puppeteer: Puppeteer[A], //Remote invocation
                     override val chip: Chip[A], //Reflective invocation
-                    val descriptions: PuppetDescriptions,
+                    val descriptions: TreeViewBehavior,
                     val isOwner: Boolean,
                     id: Int,
                     @Nullable override val parent: SyncNode[_]) extends MemberSyncNode[A] {
@@ -69,13 +71,10 @@ class PuppetNode[A](override val puppeteer: Puppeteer[A], //Remote invocation
 
     private def makeMemberInvocation(packet: InvocationPacket, response: ResponseSubmitter): Unit = {
         val methodID = packet.methodID
-        var result   = puppeteer.getPuppetWrapper
-                .getChoreographer
-                .forceLocalInvocation {
-                    chip.callMethod(methodID, packet.params)
-                }
+        var result   = chip.callMethod(methodID, packet.params)
         if (isOwner) {
-            val canSyncReturnType = puppeteer.puppetDescription.isReturnValueSynchronized(methodID)
+            val methodBehavior = puppeteer.wrapperBehavior.getMethodBehavior(methodID)
+            val canSyncReturnType = methodBehavior.get.syncReturnValue
             if (result != null && canSyncReturnType) {
                 implicit val resultCT: ClassTag[_] = ClassTag(result.getClass)
                 val id             = ThreadLocalRandom.current().nextInt()
@@ -85,11 +84,11 @@ class PuppetNode[A](override val puppeteer: Puppeteer[A], //Remote invocation
                 result = synchronizer.genSynchronizedObject(resultNodePath, result, ownerID, descriptions) {
                     (wrapper, path) =>
                         val id          = path.last
-                        val description = descriptions.getDescFromClass(wrapper.getClass)
+                        val description = descriptions.getFromClass(wrapper.getClass)
                         getGrandChild(path.drop(treeViewPath.length).dropRight(1))
                                 .fold(throw new NoSuchPuppetException(s"Puppet Node not found in path ${path.mkString("$", " -> ", "")}")) {
                                     parent =>
-                                        val chip      = ObjectChip[Any](ownerID, description, wrapper.asInstanceOf[PuppetWrapper[Any]])
+                                        val chip      = ObjectChip[Any](ownerID, description.asInstanceOf[WrapperBehavior[Any]], wrapper.asInstanceOf[PuppetWrapper[Any]])
                                         val puppeteer = wrapper.getPuppeteer.asInstanceOf[Puppeteer[Any]]
                                         parent.addChild(id, new PuppetNode(puppeteer, chip, descriptions, isOwner, id, _))
                                 }

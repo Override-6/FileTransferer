@@ -10,13 +10,13 @@
  *  questions.
  */
 
-package fr.linkit.api.connection.cache.repo.annotations;
+package fr.linkit.api.connection.cache.repo.description
 
-@Deprecated
-public @interface FieldControl {
+import scala.reflect.ClassTag
+import scala.reflect.runtime.universe._
 
-    boolean hide() default false;
+trait TreeViewBehavior {
+    def get[B: TypeTag : ClassTag]: WrapperBehavior[B]
 
-    boolean synchronize() default false;
-
+    def getFromClass[B](clazz: Class[B]): WrapperBehavior[B]
 }

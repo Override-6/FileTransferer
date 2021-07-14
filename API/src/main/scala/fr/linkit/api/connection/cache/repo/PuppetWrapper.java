@@ -12,8 +12,8 @@
 
 package fr.linkit.api.connection.cache.repo;
 
-import fr.linkit.api.connection.cache.repo.description.PuppetDescription;
-import fr.linkit.api.connection.cache.repo.description.PuppeteerDescription;
+import fr.linkit.api.connection.cache.repo.description.PuppeteerInfo;
+import fr.linkit.api.connection.cache.repo.description.WrapperBehavior;
 
 import java.io.Serializable;
 
@@ -23,9 +23,9 @@ public interface PuppetWrapper<T> extends Serializable {
 
     Puppeteer<T> getPuppeteer();
 
-    PuppetDescription<T> getPuppetDescription();
+    WrapperBehavior<T> getBehavior();
 
-    PuppeteerDescription getPuppeteerDescription();
+    PuppeteerInfo getPuppeteerDescription();
 
     InvocationChoreographer getChoreographer();
 
@@ -35,6 +35,6 @@ public interface PuppetWrapper<T> extends Serializable {
 
     T detachedSnapshot();
 
-    Class<?> getWrappedClass();
+    Class<T> getWrappedClass();
 
 }

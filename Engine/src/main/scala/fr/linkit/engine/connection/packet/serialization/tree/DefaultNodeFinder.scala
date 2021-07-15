@@ -24,17 +24,22 @@ class DefaultNodeFinder(context: DefaultSerialContext) extends NodeFinder {
     import context._
 
     override def getSerialNodeForType[T](clazz: Class[_]): SerialNode[T] = {
-        userFactories
-                .find(_.canHandle(clazz))
+        //println("getting...")
+        //println(s"Getting serial not for $clazz :D")
+        val node = userFactories
+                .find({ s =>
+                    //println(s"Testing for ${s}")
+                    s.canHandle(clazz)
+                })
                 .getOrElse(getDefaultFactory(clazz))
                 .asInstanceOf[NodeFactory[T]]
-                .newNode(this, getClassProfile[T](clazz.asInstanceOf[Class[T]]))
+        node.newNode(this, getClassProfile[T](clazz.asInstanceOf[Class[T]]))
     }
 
     override def getSerialNodeForRef[T: ClassTag](any: T): SerialNode[T] = {
         if (any == null)
             return NullNode
-                    .newNode(this, getProfile[Null])
+                    .newNode(this, getProfile[Null].asInstanceOf[ClassProfile[AnyRef]])
                     .asInstanceOf[SerialNode[T]]
         getSerialNodeForType[T](any.getClass.asInstanceOf[Class[_]])
     }
@@ -47,10 +52,7 @@ class DefaultNodeFinder(context: DefaultSerialContext) extends NodeFinder {
         val fields = profile.desc.serializableFields
         fields.map(fields => {
             val fieldValue = fields.first.get(obj)
-            if (fieldValue == null)
-                getSerialNodeForRef(null)
-            else
-                getSerialNodeForType(fieldValue.getClass)
+            getSerialNodeForRef(fieldValue)
         })
     }
 

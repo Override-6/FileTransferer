@@ -19,7 +19,7 @@ import fr.linkit.api.local.generation.cbp.ClassBlueprint
 import fr.linkit.api.local.generation.compilation.CompilationResult
 import fr.linkit.api.local.generation.compilation.access.CompilerType
 import fr.linkit.engine.connection.cache.repo.generation.WrapperCompilationRequestFactory.DefaultClassBlueprint
-import fr.linkit.engine.connection.cache.repo.generation.WrappersClassResource.WrapperPrefixName
+import fr.linkit.engine.connection.cache.repo.generation.WrappersClassResource.WrapperSuffixName
 import fr.linkit.engine.connection.cache.repo.generation.bp.ScalaWrapperClassBlueprint
 import fr.linkit.engine.connection.cache.repo.generation.rectifier.ClassRectifier
 import fr.linkit.engine.local.LinkitApplication
@@ -51,7 +51,7 @@ class WrapperCompilationRequestFactory extends AbstractCompilationRequestFactory
                         Some(contexts
                                 .map { desc =>
                                     val clazz                    = desc.clazz
-                                    val wrapperClassName         = adaptClassName(clazz.getName, WrapperPrefixName)
+                                    val wrapperClassName         = adaptClassName(clazz.getName)
                                     val loader                   = new GeneratedClassLoader(req.classDir, clazz.getClassLoader, Seq(classOf[LinkitApplication].getClassLoader))
                                     val (byteCode, wrapperClass) = new ClassRectifier(desc, wrapperClassName, loader, clazz).rectifiedClass
                                     val wrapperClassFile         = req.classDir.resolve(wrapperClassName.replace(".", File.separator) + ".class")
@@ -72,7 +72,7 @@ class WrapperCompilationRequestFactory extends AbstractCompilationRequestFactory
 
     private def getSourceCode(desc: PuppetClassDescription[_]): IterableOnce[SourceCode] = {
         val name = desc.clazz.getName
-        Seq(SourceCode(adaptClassName(name, WrapperPrefixName), classBlueprint.toClassSource(desc), classBlueprint.compilerType))
+        Seq(SourceCode(adaptClassName(name), classBlueprint.toClassSource(desc), classBlueprint.compilerType))
     }
 
 }

@@ -27,10 +27,10 @@ import fr.linkit.engine.connection.packet.traffic.channel.request.RequestPacketC
 
 import java.util.concurrent.ThreadLocalRandom
 
-class SimplePuppeteer[S](channel: RequestPacketChannel,
-                         override val repo: EngineObjectCenter[_],
-                         override val puppeteerDescription: PuppeteerInfo,
-                         val wrapperBehavior: WrapperBehavior[S]) extends Puppeteer[S] {
+class InstancePuppeteer[S](channel: RequestPacketChannel,
+                           override val repo: EngineObjectCenter[_],
+                           override val puppeteerDescription: PuppeteerInfo,
+                           val wrapperBehavior: WrapperBehavior[S]) extends Puppeteer[S] {
 
     override val ownerID     : String                  = puppeteerDescription.owner
     private  val bcScope                               = prepareScope(ChannelScopes.discardCurrent)

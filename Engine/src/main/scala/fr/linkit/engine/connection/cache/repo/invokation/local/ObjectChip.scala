@@ -46,24 +46,6 @@ case class ObjectChip[S] private(owner: String,
         }
     }
 
-    private[repo] def handleBundle(packet: Packet, submitter: ResponseSubmitter): Unit = {
-        packet match {
-            case ObjectPacket((methodId: Int, args: Array[Array[Any]])) =>
-                var result: Any = null
-                try {
-                    result = callMethod(methodId, args)
-                } catch {
-                    case NonFatal(e) =>
-                        //FIXME instance loop for serializers.
-                        throw e
-                    //result = ThrowableWrapper(e)
-                }
-                submitter
-                        .addPacket(RefPacket(result))
-                        .submit()
-        }
-    }
-
 }
 
 object ObjectChip {

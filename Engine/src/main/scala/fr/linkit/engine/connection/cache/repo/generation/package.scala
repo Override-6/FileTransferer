@@ -12,27 +12,17 @@
 
 package fr.linkit.engine.connection.cache.repo
 
-import fr.linkit.engine.connection.cache.repo.generation.WrappersClassResource.{WrapperPackage, WrapperPrefixName}
-
-import java.io.File
+import fr.linkit.engine.connection.cache.repo.generation.WrappersClassResource.{WrapperPackage, WrapperSuffixName}
 
 package object generation {
 
-    def adaptClassName(wrappedClass: String, prefixName: String): String = {
-        val className  = wrappedClass.replace(File.separator, ".")
-        val pivotIndex = className.lastIndexOf('.')
-
-        var simpleName = className.drop(pivotIndex + 1)
-        if (simpleName.startsWith(prefixName))
-            return className
-        simpleName = prefixName + simpleName
-
-        var packageName = className.take(pivotIndex)
-        if (packageName.startsWith(WrapperPackage))
-            return packageName + "." + simpleName
-        packageName = WrapperPackage + packageName
-
-        packageName + "." + simpleName
+    def adaptClassName(wrappedClassName: String): String = {
+        var result = wrappedClassName
+        if (!wrappedClassName.startsWith(WrapperPackage))
+            result = WrapperPackage + result
+        if (!wrappedClassName.endsWith(WrapperSuffixName))
+            result = result + WrapperSuffixName
+        result
     }
 
 }

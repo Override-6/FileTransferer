@@ -154,11 +154,11 @@ class NetworkSharedCacheManager(override val family: String,
 
                     cacheRetrievalAction { () =>
                         println(s"OPENING CACHE $cacheID OF TYPE ${classTag[A].runtimeClass}")
-                        val baseContent = retrieveCacheContent(cacheID, behavior)
+                        val baseContent = retrieveCacheContent(cacheID, behavior).orNull
                         println(s"CONTENT RECEIVED (${baseContent}) FOR CACHE $cacheID")
 
-                        if (baseContent.isDefined) {
-                            sharedCache.setContent(baseContent.get)
+                        if (baseContent != null) {
+                            sharedCache.setContent(baseContent)
                         }
                     }
 

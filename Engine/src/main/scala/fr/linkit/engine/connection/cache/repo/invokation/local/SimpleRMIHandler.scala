@@ -57,9 +57,6 @@ object SimpleRMIHandler extends RMIHandler {
             AppLogger.debug("Performing synchronous remote method invocation...")
             result = puppeteer.sendInvokeAndWaitResult[R](id, args)
         }
-        wrapper.getChoreographer.forceLocalInvocation {
-            AppLogger.debug("Returned rmi result = " + result)
-        }
         result
     }
 }

@@ -16,7 +16,7 @@ import fr.linkit.api.connection.cache.repo.PuppetWrapper
 import fr.linkit.api.connection.cache.repo.generation.GeneratedClassLoader
 import fr.linkit.api.local.resource.external.ResourceFolder
 import fr.linkit.api.local.resource.representation.{FolderRepresentation, ResourceRepresentationFactory}
-import fr.linkit.engine.connection.cache.repo.generation.WrappersClassResource.WrapperPrefixName
+import fr.linkit.engine.connection.cache.repo.generation.WrappersClassResource.WrapperSuffixName
 import fr.linkit.engine.local.LinkitApplication
 import fr.linkit.engine.local.mapping.ClassMappings
 
@@ -32,7 +32,7 @@ class WrappersClassResource(override val resource: ResourceFolder) extends Folde
 
     def findWrapperClass[S](puppetClass: Class[_]): Option[Class[S with PuppetWrapper[S]]] = {
         val puppetClassName  = puppetClass.getName
-        val wrapperClassName = adaptClassName(puppetClassName, WrapperPrefixName)
+        val wrapperClassName = adaptClassName(puppetClassName)
         generatedClasses.getOrElseUpdate(wrapperClassName, {
             val wrapperClassPath = folderPath.resolve(wrapperClassName.replace('.', File.separatorChar) + ".class")
             if (Files.notExists(wrapperClassPath))
@@ -59,8 +59,7 @@ class WrappersClassResource(override val resource: ResourceFolder) extends Folde
 
 object WrappersClassResource extends ResourceRepresentationFactory[WrappersClassResource, ResourceFolder] {
 
-    val WrapperPrefixName : String = "Puppet"
-    val WrapperMetaPrefixName : String = "Meta"
+    val WrapperSuffixName : String = "Wrapper"
     val WrapperPackageName: String = "gen"
     val WrapperPackage    : String = WrapperPackageName + "."
 

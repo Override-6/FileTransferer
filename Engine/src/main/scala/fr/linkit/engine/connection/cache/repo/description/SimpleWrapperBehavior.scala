@@ -17,9 +17,9 @@ import fr.linkit.api.local.generation.PuppetClassDescription
 
 import scala.reflect.runtime.universe._
 
-class SimpleWrapperBehavior[A](override val classDesc: PuppetClassDescription[A],
-                               override val treeView: TreeViewBehavior,
-                               factory: MemberBehaviorFactory) extends WrapperBehavior[A] {
+class SimpleWrapperBehavior[A] private(override val classDesc: PuppetClassDescription[A],
+                                       override val treeView: TreeViewBehavior,
+                                       factory: MemberBehaviorFactory) extends WrapperBehavior[A] {
 
     private val methods = {
         classDesc.listMethods()
@@ -51,8 +51,11 @@ class SimpleWrapperBehavior[A](override val classDesc: PuppetClassDescription[A]
 
 object SimpleWrapperBehavior {
 
-    def apply[A](classDesc: PuppetClassDescription[A], treeView: TreeViewBehavior, factory: MemberBehaviorFactory): SimpleWrapperBehavior[A] = new SimpleWrapperBehavior(classDesc, treeView, factory)
-
+    def apply[A](classDesc: PuppetClassDescription[A], treeView: TreeViewBehavior, factory: MemberBehaviorFactory): SimpleWrapperBehavior[A] = {
+        val bhv = new SimpleWrapperBehavior(classDesc, treeView, factory)
+        treeView.put(classDesc.clazz, bhv)
+        bhv
+    }
 
     def toSynchronisedParamsIndexes(literal: String, method: Symbol): Seq[Boolean] = {
         val synchronizedParamNumbers = literal

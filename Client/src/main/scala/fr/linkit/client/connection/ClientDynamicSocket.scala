@@ -35,14 +35,17 @@ class ClientDynamicSocket(boundAddress: InetSocketAddress,
     }
 
     override protected def handleReconnection(): Unit = {
-        try {
-            newSocket()
-        } catch {
-            case _@(_: SocketException | _: ConnectException) =>
-                AppLogger.warn("Unable to connect to server.")
-                AppLogger.warn(s"Waiting for $reconnectionPeriod ms before another try...")
-                Thread.sleep(reconnectionPeriod)
-                handleReconnection()
+        var notConnected = true
+        while (notConnected) {
+            try {
+                newSocket()
+                notConnected = false
+            } catch {
+                case _@(_: SocketException | _: ConnectException) =>
+                    AppLogger.warn("Unable to connect to server.")
+                    AppLogger.warn(s"Waiting for $reconnectionPeriod ms before another try...")
+                    Thread.sleep(reconnectionPeriod)
+            }
         }
         markAsConnected()
     }

@@ -58,6 +58,8 @@ trait AbstractPuppetWrapper[A] extends PuppetWrapper[A] {
         val methodBehavior = behavior.getMethodBehavior(id).get
         val name           = methodBehavior.desc.javaMethod.getName
         val argsString     = args.map(_.mkString("(", ", ", ")")).mkString("")
+        /*if (name == "toString")
+            Thread.dumpStack()*/
         if (choreographer.isMethodExecutionForcedToLocal) {
             println(s"forced local method call $name$argsString.")
             return superCall.asInstanceOf[R]

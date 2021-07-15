@@ -21,14 +21,14 @@ case class LengthSign(lengths: Array[Int], childrenBytes: Array[Array[Byte]]) {
         throw new IllegalArgumentException("LengthSign contains negative length")
 
     def toBytes: Array[Byte] = {
-       //println("toBytes invoked:")
-       //println(s"  lengths = ${lengths.mkString("Array(", ", ", ")")}")
+        //println("toBytes invoked:")
+        //println(s"  lengths = ${lengths.mkString("Array(", ", ", ")")}")
         val lengthsBytes = lengths.flatMap(l => NumberSerializer.serializeNumber(l, true))
-       //println(s"  lengthsBytes = ${ScalaUtils.toPresentableString(lengthsBytes)}")
-       //println(s"  children bytes = ${ScalaUtils.toPresentableString(childrenBytes.flatten)}")
-        val result = lengthsBytes ++ childrenBytes.flatten
-       //println("   Result = " + ScalaUtils.toPresentableString(result))
-       //println("End.")
+        //println(s"  lengthsBytes = ${ScalaUtils.toPresentableString(lengthsBytes)}")
+        //println(s"  children bytes = ${ScalaUtils.toPresentableString(childrenBytes.flatten)}")
+        val result       = lengthsBytes ++ childrenBytes.flatten
+        //println("   Result = " + ScalaUtils.toPresentableString(result))
+        //println("End.")
         result
     }
 
@@ -38,7 +38,7 @@ object LengthSign {
 
     def of(root: Any, desc: SerializableClassDescription, children: Iterable[SerialNode[_]]): LengthSign = {
         //println()
-       //println(s"--- Creating sign for object $root")
+        //println(s"--- Creating sign for object $root")
         if (children.isEmpty && desc.signItemCount == -1)
             return LengthSign(Array(), Array())
 
@@ -48,37 +48,38 @@ object LengthSign {
         val fieldValues = desc.serializableFields
                 .map(_.first.get(root))
 
-       //println(s"fieldValues = ${fieldValues}")
-
+        //println(s"fieldValues = ${fieldValues}")
         var i = 0
-       //println("-- Setting children")
+        //println("-- Setting children")
         for (child <- children) {
-           //println(s"--  For child $child ($i): ")
+            //println(s"--  For child $child ($i): ")
             val fieldValue = fieldValues(i)
-            //Try(//println(s"    fieldValue = ${fieldValue} of type ${fieldValue.getClass}"))
-            //Try(//println(s"fieldValueBytes = ${new String(NumberSerializer.serializeInt(fieldValue.getClass.getName.hashCode))}"))
+            //println(s"    fieldValue = ${fieldValue}")
+            //if (fieldValue != null)
+                //println("    of class " + fieldValue.getClass)
+            //println(s"fieldValueBytes = ${new String(NumberSerializer.serializeInt(fieldValue.getClass.getName.hashCode))}")
+            //println(s"    childNode = ${child}")
             val bytes      = child.serialize(cast(fieldValue), true)
-           //println(s"    child = ${fieldValue}")
-           //println(s"    child bytes = ${ScalaUtils.toPresentableString(bytes)}")
-           //println(s"    raw child bytes = ${bytes.mkString("Array(", ", ", ")")}")
+            //println(s"    valueBytes bytes = ${ScalaUtils.toPresentableString(bytes)}")
+            //println(s"    raw child bytes = ${bytes.mkString("Array(", ", ", ")")}")
 
             byteArrays(i) = bytes
             if (i < lengths.length)
                 lengths(i) = bytes.length
-           //println(s"    lengths = ${lengths.mkString("Array(", ", ", ")")}")
+            //println(s"    lengths = ${lengths.mkString("Array(", ", ", ")")}")
             i += 1
         }
-       //println("Done.")
-       //println()
+        //println("Done.")
+        //println()
         LengthSign(lengths, byteArrays)
     }
 
     def from(signItemCount: Int, bytes: Array[Byte], totalObjectLength: Int, start: Int): LengthSign = {
-       //println()
-       //println(s"--- Reading sign from bytes ${ScalaUtils.toPresentableString(bytes.drop(start))}")
-       //println(s"signItemCount = ${signItemCount}")
-       //println(s"totalObjectLength = ${totalObjectLength}")
-       //println(s"start = ${start}")
+        //println()
+        //println(s"--- Reading sign from bytes ${ScalaUtils.toPresentableString(bytes.drop(start))}")
+        //println(s"signItemCount = ${signItemCount}")
+        //println(s"totalObjectLength = ${totalObjectLength}")
+        //println(s"start = ${start}")
 
         if (signItemCount == -1)
             return LengthSign(Array(), Array())
@@ -87,16 +88,16 @@ object LengthSign {
         val childrenByteArrays = new Array[Array[Byte]](signItemCount + 1)
 
         var currentIndex = start
-       //println("-- Reading lengths ")
+        //println("-- Reading lengths ")
         for (i <- 0 until signItemCount) {
-           //println(s"FOR LENGTH ${i}: ")
+            //println(s"FOR LENGTH ${i}: ")
             val (length, lengthByteCount: Byte) = NumberSerializer.deserializeFlaggedNumber[Int](bytes, currentIndex)
             lengths(i) = length
-           //println(s"length = ${length}")
-           //println(s"lengthByteCount = ${lengthByteCount}")
-           //println(s"lengths = ${lengths.mkString("Array(", ", ", ")")}")
+            //println(s"length = ${length}")
+            //println(s"lengthByteCount = ${lengthByteCount}")
+            //println(s"lengths = ${lengths.mkString("Array(", ", ", ")")}")
             currentIndex += lengthByteCount
-           //println(s"currentIndex is now = ${currentIndex}")
+            //println(s"currentIndex is now = ${currentIndex}")
         }
 
         //println("-- Reading children bytes")
@@ -116,7 +117,7 @@ object LengthSign {
         LengthSign(lengths, childrenByteArrays)
     }
 
-    private def cast[T](any: Any): T = {
+    @inline private def cast[T](any: Any): T = {
         any.asInstanceOf[T]
     }
 

@@ -14,19 +14,20 @@ package fr.linkit.engine.connection.packet.serialization.tree.nodes
 
 import fr.linkit.api.connection.packet.serialization.tree._
 
-object NullNode extends NodeFactory[Null] {
+object NullNode extends NodeFactory[AnyRef] {
 
     val NullFlag: Array[Byte] = Array(-74)
+    val NoneFlag: Array[Byte] = Array(-73)
 
-    override def canHandle(clazz: Class[_]): Boolean = clazz == null
+    override def canHandle(clazz: Class[_]): Boolean = clazz == null || clazz == None.getClass
 
     override def canHandle(bytes: ByteSeq): Boolean = bytes.sameFlagAt(0, NullFlag(0))
 
-    override def newNode(finder: NodeFinder, profile: ClassProfile[Null]): SerialNode[Null] = (n, b) => {
-        NullFlag
+    override def newNode(finder: NodeFinder, profile: ClassProfile[AnyRef]): SerialNode[AnyRef] = (n, b) => {
+        NullFlag ++ (if (n eq None) NoneFlag else Array())
     }
 
-    override def newNode(finder: NodeFinder, bytes: ByteSeq): DeserialNode[Null] = () => {
-        null
+    override def newNode(finder: NodeFinder, bytes: ByteSeq): DeserialNode[AnyRef] = () => {
+        (if (bytes.length == 2) None else null).asInstanceOf[AnyRef]
     }
 }

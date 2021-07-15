@@ -25,7 +25,7 @@ import fr.linkit.engine.connection.cache.repo.description.TreeViewDefaultBehavio
 import fr.linkit.engine.connection.cache.repo.description.annotation.AnnotationBasedMemberBehaviorFactory
 import fr.linkit.engine.connection.cache.repo.generation.{CloneHelper, PuppetWrapperClassGenerator, WrappersClassResource}
 import fr.linkit.engine.connection.cache.repo.invokation.local.{ObjectChip, SimpleRMIHandler}
-import fr.linkit.engine.connection.cache.repo.invokation.remote.{InvocationPacket, SimplePuppeteer}
+import fr.linkit.engine.connection.cache.repo.invokation.remote.{InvocationPacket, InstancePuppeteer}
 import fr.linkit.engine.connection.cache.repo.tree.{DefaultPuppetCenter, MemberSyncNode, PuppetNode}
 import fr.linkit.engine.connection.packet.fundamental.RefPacket.{ObjectPacket, StringPacket}
 import fr.linkit.engine.connection.packet.traffic.ChannelScopes
@@ -90,7 +90,7 @@ class DefaultEngineObjectCenter[A <: Serializable](handler: SharedCacheManager,
         if (wrapper.isInitialized)
             return
         val puppeteerDesc = wrapper.getPuppeteerDescription
-        val puppeteer     = new SimplePuppeteer[B](channel, this, puppeteerDesc, behavior)
+        val puppeteer     = new InstancePuppeteer[B](channel, this, puppeteerDesc, behavior)
         wrapper.initPuppeteer(puppeteer)
     }
 
@@ -165,7 +165,7 @@ class DefaultEngineObjectCenter[A <: Serializable](handler: SharedCacheManager,
 
         val wrapperBehavior = behaviors.getFromClass[B](obj.getClass.asInstanceOf[Class[B]])
         val puppeteerDesc   = PuppeteerInfo(family, cacheID, owner, treeViewPath)
-        val puppeteer       = new SimplePuppeteer[B](channel, this, puppeteerDesc, wrapperBehavior)
+        val puppeteer       = new InstancePuppeteer[B](channel, this, puppeteerDesc, wrapperBehavior)
         val wrapper         = genPuppetWrapper[B](puppeteer, obj)
         foreachSyncObjAction(wrapper, treeViewPath)
         for (bhv <- wrapperBehavior.listField() if bhv.isSynchronized) {

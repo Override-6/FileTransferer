@@ -24,12 +24,18 @@ class TreeViewDefaultBehaviors(memberBehaviorFactory: MemberBehaviorFactory) ext
     private val behaviors = mutable.HashMap.empty[Class[_], WrapperBehavior[_]]
 
     override def get[B: universe.TypeTag : ClassTag]: WrapperBehavior[B] = {
-        getFromClass(classTag[B].runtimeClass.asInstanceOf[Class[B]])
+        getFromAnyClass(classTag[B].runtimeClass)
     }
 
     override def getFromClass[B](clazz: Class[B]): WrapperBehavior[B] = {
+        getFromAnyClass[B](clazz)
+    }
+
+    private def getFromAnyClass[B](clazz: Class[_]): WrapperBehavior[B] = {
         behaviors.getOrElseUpdate(clazz, SimpleWrapperBehavior(SimplePuppetClassDescription(clazz), this, memberBehaviorFactory))
                 .asInstanceOf[WrapperBehavior[B]]
     }
+
+    override def put[B](clazz: Class[B], bhv: WrapperBehavior[B]): Unit = behaviors.put(clazz, bhv)
 
 }

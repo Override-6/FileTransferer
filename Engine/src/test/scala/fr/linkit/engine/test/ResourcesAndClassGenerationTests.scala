@@ -26,9 +26,10 @@ import fr.linkit.engine.connection.cache.repo.DefaultEngineObjectCenter.PuppetPr
 import fr.linkit.engine.connection.cache.repo.description.annotation.AnnotationBasedMemberBehaviorFactory
 import fr.linkit.engine.connection.cache.repo.description.{SimplePuppetClassDescription, SimpleWrapperBehavior, TreeViewDefaultBehaviors}
 import fr.linkit.engine.connection.cache.repo.generation.{CloneHelper, PuppetWrapperClassGenerator, WrappersClassResource}
-import fr.linkit.engine.connection.cache.repo.invokation.remote.SimplePuppeteer
+import fr.linkit.engine.connection.cache.repo.invokation.remote.InstancePuppeteer
 import fr.linkit.engine.connection.packet.fundamental.RefPacket.AnyRefPacket
 import fr.linkit.engine.connection.packet.serialization.DefaultSerializer
+import fr.linkit.engine.connection.packet.serialization.tree.{DefaultClassProfile, DefaultSerialContext}
 import fr.linkit.engine.connection.packet.traffic.channel.request.ResponsePacket
 import fr.linkit.engine.local.LinkitApplication
 import fr.linkit.engine.local.generation.compilation.access.DefaultCompilerCenter
@@ -90,6 +91,7 @@ class ResourcesAndClassGenerationTests {
         println(s"Serialized testedPacket : ${ScalaUtils.toPresentableString(testPacketBytes)}")
         val rePacket = Assertions.assertInstanceOf(packet.getClass, new DefaultSerializer().deserialize(testPacketBytes))
         println(s"resulting packet = ${rePacket.mkString("Array(", ", ", ")")}")
+
     }
 
     @Test
@@ -132,7 +134,8 @@ class ResourcesAndClassGenerationTests {
     @Order(3)
     def generateComplexScalaClass(): Unit = {
         val obj = forObject(ListBuffer.empty[String])
-        println(s"obj.getClass.getDeclaredFields = ${obj.getClass.getDeclaredFields.mkString("Array(", ", ", ")")}")
+        /*for (i <- 0 to 1000)
+            println(s"obj.getClass.getDeclaredFields = ${obj.getClass.getDeclaredFields.mkString("Array(", ", ", ")")}")*/
 
         println("Adding...")
         obj addOne "LOLn't"
@@ -184,8 +187,12 @@ class ResourcesAndClassGenerationTests {
         val puppetClass = generator.getPuppetClass[A](cl)
         println(s"puppetClass = ${puppetClass}")
         val factory = AnnotationBasedMemberBehaviorFactory()
-        val pup     = new SimplePuppeteer[A](null, null, PuppeteerInfo("", 8, "", Array(1)), SimpleWrapperBehavior(SimplePuppetClassDescription[A](cl), new TreeViewDefaultBehaviors(factory), factory))
+        val pup     = new InstancePuppeteer[A](null, null, PuppeteerInfo("", 8, "", Array(1)), SimpleWrapperBehavior(SimplePuppetClassDescription[A](cl), new TreeViewDefaultBehaviors(factory), factory))
         val puppet  = CloneHelper.instantiateFromOrigin[A](puppetClass, obj)
+
+        val profile = new DefaultClassProfile[A with PuppetWrapper[A]](puppetClass, new DefaultSerialContext)
+        println(s"profile = ${profile}")
+
         puppet.initPuppeteer(pup)
         puppet.getChoreographer.forceLocalInvocation {
             println(s"puppet = ${puppet}")

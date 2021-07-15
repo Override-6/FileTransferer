@@ -14,7 +14,7 @@ package fr.linkit.engine.connection.packet.serialization.tree.nodes
 
 import fr.linkit.api.connection.packet.serialization.tree._
 import fr.linkit.engine.connection.packet.serialization.tree._
-import fr.linkit.engine.local.utils.ScalaUtils
+import fr.linkit.engine.local.utils.{NumberSerializer, ScalaUtils}
 import fr.linkit.engine.local.utils.ScalaUtils.findUnsafe
 
 object ObjectNode {
@@ -45,23 +45,21 @@ object ObjectNode {
     class ObjectSerialNode(profile: ClassProfile[Any], context: NodeFinder) extends SerialNode[Any] {
 
         override def serialize(t: Any, putTypeHint: Boolean): Array[Byte] = {
-            //println(s"Serializing Object ${t}")
+           //println(s"Serializing Object ${t}")
 
             val desc = profile.desc
-            //println(s"Object desc = ${desc}")
+           //println(s"Object desc = ${desc}")
             profile.applyAllSerialProcedures(t)
 
             if (t == null)
                 return Array(NullObjectFlag)
 
-            //println(s"t.getClass = ${t.getClass} (${t.getClass.getName.hashCode()})")
+           //println(s"t.getClass = ${t.getClass} (${t.getClass.getName.hashCode()})")
             val children = context.listNodes[Any](profile, t)
-            //println(s"children = ${children}")
+           //println(s"children = ${children}")
 
             val classType = desc.classCode
-            //println(s"t.getClass.getName.hashCode = ${t.getClass.getName.hashCode}")
-            //println(s"classType = ${toPresentableString(classType)}")
-            //println(s"NumberSerializer.deserializeInt(classType) = ${NumberSerializer.deserializeInt(classType, 0)}")
+           //println(s"NumberSerializer.deserializeInt(classType) = ${NumberSerializer.deserializeInt(classType, 0)}")
             val sign      = LengthSign.of(t, desc, children).toBytes
             //println(s"sign = ${toPresentableString(sign)}")
             val bytes     = classType ++ sign

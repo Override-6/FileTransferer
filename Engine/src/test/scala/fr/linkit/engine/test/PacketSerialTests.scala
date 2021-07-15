@@ -13,23 +13,20 @@
 package fr.linkit.engine.test
 
 import fr.linkit.api.connection.packet.DedicatedPacketCoordinates
-import fr.linkit.engine.connection.cache.CacheArrayContent
-import fr.linkit.engine.connection.cache.repo.DefaultEngineObjectCenter.PuppetProfile
-import fr.linkit.engine.connection.packet.fundamental.RefPacket.{AnyRefPacket, StringPacket}
+import fr.linkit.engine.connection.packet.SimplePacketAttributes
+import fr.linkit.engine.connection.packet.fundamental.ValPacket.IntPacket
 import fr.linkit.engine.connection.packet.serialization.DefaultSerializer
-import fr.linkit.engine.connection.packet.traffic.channel.request.{ResponsePacket, SubmitterPacket}
+import fr.linkit.engine.connection.packet.traffic.channel.request.RequestPacket
 import fr.linkit.engine.local.LinkitApplication
 import fr.linkit.engine.local.system.fsa.LocalFileSystemAdapters
 import fr.linkit.engine.local.utils.ScalaUtils
 import org.junit.jupiter.api.TestInstance.Lifecycle
 import org.junit.jupiter.api.{Assertions, BeforeAll, Test, TestInstance}
 
-import scala.collection.mutable.ListBuffer
-
 @TestInstance(Lifecycle.PER_CLASS)
 class PacketSerialTests {
 
-    private val testedPacket = Array(DedicatedPacketCoordinates(12, "s1", "TestServer1"), ResponsePacket(78, Array(StringPacket("TEST"))))
+    private val testedPacket = Array(DedicatedPacketCoordinates(12, "TestServer1", "s1"), SimplePacketAttributes("family" -> "Global Cache", "behavior" -> "GET_OR_WAIT"), RequestPacket(1, Array(IntPacket(3))))
 
     private var testPacketBytes: Array[Byte] = _
 

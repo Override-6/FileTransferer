@@ -42,7 +42,8 @@ class ClassDescription(val clazz: Class[_]) extends SerializableClassDescription
         def listAllSerialFields(cl: Class[_]): Seq[Field] = {
             if (cl == null)
                 return Seq.empty
-            cl.getDeclaredFields
+            val fields = cl.getDeclaredFields
+            fields
                     .filterNot(p => Modifier.isTransient(p.getModifiers) || Modifier.isStatic(p.getModifiers))
                     .tapEach(_.setAccessible(true))
                     .toList ++ listAllSerialFields(cl.getSuperclass)
@@ -52,6 +53,7 @@ class ClassDescription(val clazz: Class[_]) extends SerializableClassDescription
                 .groupBy(f => f.getName -> f.getType)
                 .map(fields => Fields(fields._2.head, fields._2.drop(1)))
                 .toList
+                .sortBy(_.first.getName)
         //}
     }
 

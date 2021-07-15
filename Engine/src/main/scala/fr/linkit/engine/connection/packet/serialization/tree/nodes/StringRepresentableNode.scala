@@ -14,7 +14,6 @@ package fr.linkit.engine.connection.packet.serialization.tree.nodes
 
 import fr.linkit.api.connection.packet.serialization.StringRepresentable
 import fr.linkit.api.connection.packet.serialization.tree._
-import fr.linkit.engine.connection.packet.serialization.tree._
 import fr.linkit.engine.local.utils.NumberSerializer
 
 import scala.reflect.{ClassTag, classTag}
@@ -26,7 +25,13 @@ object StringRepresentableNode {
     def apply[T: ClassTag](repr: StringRepresentable[T]): NodeFactory[T] = new NodeFactory[T] {
         private val clazz = classTag[T].runtimeClass
 
-        override def canHandle(clazz: Class[_]): Boolean = this.clazz.isAssignableFrom(clazz)
+        override def canHandle(clazz: Class[_]): Boolean = {
+            //println(s"clazz = ${clazz}")
+            //println(s"this.clazz = ${this.clazz}")
+            val result = this.clazz.isAssignableFrom(clazz)
+            //println(s"result = ${result}")
+            result
+        }
 
         override def canHandle(bytes: ByteSeq): Boolean = {
             //println(s"bytes = ${ScalaUtils.toPresentableString(bytes.array)}")
@@ -51,7 +56,6 @@ object StringRepresentableNode {
 
         override def serialize(t: T, putTypeHint: Boolean): Array[Byte] = {
             val typeBytes = NumberSerializer.serializeInt(t.getClass.getName.hashCode)
-            //Thread.dumpStack()
             typeBytes ++ SRFlag ++ repr.getRepresentation(t).getBytes
         }
     }

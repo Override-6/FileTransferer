@@ -31,13 +31,13 @@ import java.util.Arrays
 * and methods required for a PuppetWrapper
 * */
 @SerialVersionUID($CompileTime$L)
-class Puppet$WrappedClassSimpleName$$TParamsIn$ extends AbstractPuppetWrapper[$WrappedClassSimpleName$$TParamsOut$] {
+class $WrappedClassSimpleName$Wrapper$TParamsIn$ extends AbstractPuppetWrapper[$WrappedClassSimpleName$$TParamsOut$] {
 
     //Fun fact: Override annotations are conventional.
     //They does not affect abstraction or classes behaviors.
     //Override annotations are removed at compilation.
 
-    override def wrappedClass: Class[_] = Puppet$WrappedClassSimpleName$.WrappedClass
+    override def wrappedClass: Class[_] = $WrappedClassSimpleName$Wrapper.WrappedClass
 
 !!INHERITED_METHODS!! {
     $Override$ def $MethodName$$GenericTypesIn$$ParamsIn$: $ReturnType$ = {
@@ -47,6 +47,6 @@ class Puppet$WrappedClassSimpleName$$TParamsIn$ extends AbstractPuppetWrapper[$W
 
 }
 
-object Puppet$WrappedClassSimpleName$ {
+object $WrappedClassSimpleName$Wrapper {
     val WrappedClass: Class[_] = classOf[$WrappedClassSimpleName$$TParamsInBusted$]
 }

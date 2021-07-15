@@ -19,4 +19,6 @@ trait TreeViewBehavior {
     def get[B: TypeTag : ClassTag]: WrapperBehavior[B]
 
     def getFromClass[B](clazz: Class[B]): WrapperBehavior[B]
+
+    def put[B](clazz: Class[B], bhv: WrapperBehavior[B])
 }

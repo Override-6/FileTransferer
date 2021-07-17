@@ -24,7 +24,8 @@ abstract class ClientConnectionConfigBuilder {
     var socketFactory     : InetSocketAddress => Socket = s => new Socket(s.getAddress, s.getPort)
     var configName        : String                      = "simple-config"
     var hasher            : BytesHasher                 = BytesHasher.inactive
-    val identifier: String
+    var translator        : PacketTranslator            = new DefaultPacketTranslator
+    val identifier   : String
     val remoteAddress: InetSocketAddress
 
     /**
@@ -39,6 +40,7 @@ abstract class ClientConnectionConfigBuilder {
             override val configName        : String                      = builder.configName
             override val identifier        : String                      = builder.identifier
             override val hasher            : BytesHasher                 = builder.hasher
+            override val translator        : PacketTranslator            = builder.translator
         }: ClientConnectionConfiguration
     }
 

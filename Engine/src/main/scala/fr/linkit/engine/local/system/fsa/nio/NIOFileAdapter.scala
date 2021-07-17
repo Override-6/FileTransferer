@@ -12,7 +12,7 @@
 
 package fr.linkit.engine.local.system.fsa.nio
 
-import fr.linkit.api.connection.cache.repo.description.annotation.{InvokeOnly, MethodControl}
+import fr.linkit.api.connection.cache.repo.description.annotation.MethodControl
 import fr.linkit.api.local.system.fsa.{FileAdapter, FileSystemAdapter}
 
 import java.io.{InputStream, OutputStream}
@@ -69,7 +69,6 @@ case class NIOFileAdapter (path: Path, @transient fsa: NIOFileSystemAdapter) ext
 
     override def notExists: Boolean = Files.notExists(path)
 
-    @InvokeOnly("this")
     override def createAsFile(): this.type = {
         if (notExists) {
             if (Files.notExists(path.getParent))
@@ -79,7 +78,6 @@ case class NIOFileAdapter (path: Path, @transient fsa: NIOFileSystemAdapter) ext
         this
     }
 
-    @InvokeOnly("this")
     override def createAsFolder(): this.type = {
         if (notExists) {
             Files.createDirectories(path)

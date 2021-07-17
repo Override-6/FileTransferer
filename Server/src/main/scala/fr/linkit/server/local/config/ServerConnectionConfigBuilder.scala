@@ -39,6 +39,7 @@ abstract class ServerConnectionConfigBuilder {
             override val identifier                 : String            = builder.identifier
             override val port                       : Int               = builder.port
             override val hasher                     : BytesHasher       = builder.hasher
+            override val translator                 : PacketTranslator  = builder.translatorFactory
             override val identifierAmbiguityStrategy: AmbiguityStrategy = builder.identifierAmbiguityStrategy
         }
     }

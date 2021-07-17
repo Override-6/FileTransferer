@@ -52,7 +52,7 @@ class ConnectionTasksHandler(session: ExternalConnectionSession) extends TasksHa
      * @param ownFreeWill    true if the task was created by the user, false if the task comes from other Relay
      * */
     override def schedule(executor: TaskExecutor, taskIdentifier: Int, targetID: String, ownFreeWill: Boolean): Unit = {
-        if (targetID == server.supportIdentifier)
+        if (targetID == server.currentIdentifier)
             throw new TaskException("can't schedule any task execution from server to server !")
 
         val ticket = new TaskTicket(executor, taskIdentifier, server, targetID, ownFreeWill)

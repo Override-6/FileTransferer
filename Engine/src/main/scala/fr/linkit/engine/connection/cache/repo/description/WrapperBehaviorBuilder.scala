@@ -54,11 +54,15 @@ class WrapperBehaviorBuilder[T] private(desc: WrapperBehavior[T]) {
 
     class MethodModification private[WrapperBehaviorBuilder](descs: Iterable[MethodBehavior]) {
 
-        def by(control: MethodControl): Unit = descs.foreach { bhv =>
-            bhv.invocationKind = control.value
-            bhv.synchronizedParams = if (control.synchronizedParams != null) control.synchronizedParams else bhv.synchronizedParams
-            bhv.syncReturnValue = control.synchronizeReturnValue
-            bhv.isHidden = control.hide
+        def by(control: MethodControl): this.type = {
+            descs.foreach { bhv =>
+                bhv.invocationKind = control.value
+                bhv.synchronizedParams = if (control.synchronizedParams != null) control.synchronizedParams else bhv.synchronizedParams
+                bhv.syncReturnValue = control.synchronizeReturnValue
+                bhv.isHidden = control.hide
+                bhv.invokeOnly = control.invokeOnly
+            }
+            this
         }
 
         def and(otherName: String): MethodModification = {
@@ -71,7 +75,6 @@ class WrapperBehaviorBuilder[T] private(desc: WrapperBehavior[T]) {
 
 object WrapperBehaviorBuilder {
 
-
-    case class MethodControl(value: InvocationKind, synchronizeReturnValue: Boolean = false, hide: Boolean = false, synchronizedParams: Seq[Boolean] = null)
+    case class MethodControl(value: InvocationKind, synchronizeReturnValue: Boolean = false, invokeOnly: Boolean = false, hide: Boolean = false, synchronizedParams: Seq[Boolean] = null)
 
 }

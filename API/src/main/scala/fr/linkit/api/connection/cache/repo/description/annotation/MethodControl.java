@@ -44,4 +44,6 @@ public @interface MethodControl {
      * It will receive a {@link fr.linkit.api.connection.cache.repo.RemoteInvocationFailedException}
      */
     boolean hide() default false;
+
+    boolean invokeOnly() default false;
 }

@@ -23,7 +23,7 @@ class ConnectionException(@Nullable connection: ConnectionContext,
         if (connection == null)
             return
 
-        val identifier = connection.supportIdentifier
+        val identifier = connection.currentIdentifier
         sb.append("An exception occurred with connection '")
                 .append(identifier)
                 .append('\'')

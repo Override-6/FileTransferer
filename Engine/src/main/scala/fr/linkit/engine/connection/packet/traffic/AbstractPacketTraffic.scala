@@ -28,11 +28,11 @@ import scala.collection.mutable.ListBuffer
 import scala.reflect.{ClassTag, classTag}
 import scala.util.control.NonFatal
 
-abstract class AbstractPacketTraffic(override val supportIdentifier: String, procrastinator: Procrastinator) extends PacketTraffic {
+abstract class AbstractPacketTraffic(override val currentIdentifier: String, procrastinator: Procrastinator) extends PacketTraffic {
 
     private  val holders            = mutable.Map.empty[Int, ScopesHolder]
     private  val lostInjections     = mutable.Map.empty[Int, ListBuffer[PacketInjection]]
-    override val injectionContainer = new ParallelInjectionContainer(supportIdentifier)
+    override val injectionContainer = new ParallelInjectionContainer(currentIdentifier)
     @volatile private var closed    = false
 
     override def getInjectable[C <: PacketInjectable : ClassTag](id: Int,

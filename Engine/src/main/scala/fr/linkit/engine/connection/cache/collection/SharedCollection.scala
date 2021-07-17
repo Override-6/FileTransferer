@@ -132,7 +132,7 @@ class SharedCollection[A <: Serializable : ClassTag](handler: SharedCacheManager
         sendModification(ObjectPacket(mod))
         networkListeners.applyAllLater(mod.asInstanceOf[(CollectionModification, Int, A)])
         AppLogger.vTrace(s"<$family> (${
-            channel.traffic.supportIdentifier
+            channel.traffic.currentIdentifier
         }) COLLECTION IS NOW (local): " + this)
     }
 

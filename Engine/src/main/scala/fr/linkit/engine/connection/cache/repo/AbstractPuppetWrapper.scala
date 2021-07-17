@@ -29,7 +29,7 @@ trait AbstractPuppetWrapper[A] extends PuppetWrapper[A] {
         if (this.behavior != null)
             throw new PuppetAlreadyInitialisedException("This puppet is already initialized !")
         this.puppeteer = puppeteer
-        this.puppeteerDescription = puppeteer.puppeteerDescription
+        this.puppeteerDescription = puppeteer.puppeteerInfo
         this.behavior = puppeteer.wrapperBehavior
         this.puppeteer.init(asWrapper)
         this.choreographer = new InvocationChoreographer()
@@ -66,13 +66,13 @@ trait AbstractPuppetWrapper[A] extends PuppetWrapper[A] {
     protected def handleCall[R](id: Int, defaultReturnValue: R)
                                (args: Array[Any])(superCall: Array[Any] => Any): R = {
         val methodBehavior = behavior.getMethodBehavior(id).get
-        val name           = methodBehavior.desc.javaMethod.getName
-        val argsString     = args.mkString("(", ", ", ")")
+        //val name           = methodBehavior.desc.javaMethod.getName
+        //val argsString     = args.mkString("(", ", ", ")")
         val synchronizedArgs = synchronizedParams(methodBehavior, args)
         /*if (name == "toString")
             Thread.dumpStack()*/
         if (choreographer.isMethodExecutionForcedToLocal) {
-            println(s"forced local method call $name$argsString.")
+            //println(s"forced local method call $name$argsString.")
             return superCall(synchronizedArgs).asInstanceOf[R]
         }
         methodBehavior.handler

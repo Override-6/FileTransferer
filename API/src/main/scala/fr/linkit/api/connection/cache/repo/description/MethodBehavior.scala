@@ -12,28 +12,19 @@
 
 package fr.linkit.api.connection.cache.repo.description
 
-import fr.linkit.api.connection.cache.repo.description.annotation.{InvocationKind, InvokeOnly}
+import fr.linkit.api.connection.cache.repo.description.annotation.InvocationKind
 
 case class MethodBehavior(desc: MethodDescription,
-                          invokeOnly: Option[InvokeOnly],
+                          var invokeOnly: Boolean,
                           var synchronizedParams: Seq[Boolean],
                           var invocationKind: InvocationKind,
                           var syncReturnValue: Boolean,
                           var isHidden: Boolean,
                           handler: RMIHandler) {
 
-    def getDefaultReturnValue: String = {
-        invokeOnly
-                .map(_.value())
-                .getOrElse {
-                    desc.getDefaultTypeReturnValue
-                }
-    }
 
     def isRMIEnabled: Boolean = {
         invocationKind != InvocationKind.ONLY_LOCAL
     }
-
-    def isInvokeOnly: Boolean = invokeOnly.isDefined
 
 }

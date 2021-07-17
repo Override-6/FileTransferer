@@ -51,7 +51,7 @@ class ClientSideNetwork(connection: ClientConnection) extends AbstractNetwork(co
     }
 
     def initSelfEntity: SelfEngine = {
-        val identifier   = connection.supportIdentifier
+        val identifier   = connection.currentIdentifier
         val sharedCaches = newCachesManager(identifier, identifier)
         sharedCaches
                 .getCache(3, SharedInstance[ExternalConnectionState], CacheSearchBehavior.GET_OR_WAIT)
@@ -61,7 +61,7 @@ class ClientSideNetwork(connection: ClientConnection) extends AbstractNetwork(co
 
     private[client] def handshake(): Unit = {
         //AppLogger.debug("HANDSHAKING...")
-        val identifier = connection.supportIdentifier
+        val identifier = connection.currentIdentifier
         if (!sharedIdentifiers.contains(identifier))
             sharedIdentifiers.add(identifier)
         //AppLogger.debug("HANDSHAKE MADE !")

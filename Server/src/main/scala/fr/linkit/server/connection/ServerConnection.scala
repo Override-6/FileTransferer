@@ -44,10 +44,10 @@ import scala.util.control.NonFatal
 class ServerConnection(applicationContext: ServerApplication,
                        val configuration: ServerConnectionConfiguration) extends CentralConnection {
 
-    override val supportIdentifier : String                     = configuration.identifier
-    override val translator        : PacketTranslator           = new DefaultPacketTranslator
+    override val currentIdentifier : String                     = configuration.identifier
+    override val translator        : PacketTranslator           = configuration.translator
     override val port              : Int                        = configuration.port
-    private  val workerPool        : BusyWorkerPool             = new BusyWorkerPool(configuration.nWorkerThreadFunction(0), supportIdentifier)
+    private  val workerPool        : BusyWorkerPool             = new BusyWorkerPool(configuration.nWorkerThreadFunction(0), currentIdentifier)
     private  val serverSocket      : ServerSocket               = new ServerSocket(configuration.port)
     private  val connectionsManager: ExternalConnectionsManager = new ExternalConnectionsManager(this)
     override val traffic           : PacketTraffic              = new ServerPacketTraffic(this)
@@ -68,11 +68,11 @@ class ServerConnection(applicationContext: ServerApplication,
 
         val port = configuration.port
 
-        AppLogger.info(s"Server '$supportIdentifier' on port $port prepares to shutdown...")
+        AppLogger.info(s"Server '$currentIdentifier' on port $port prepares to shutdown...")
         applicationContext.unregister(this)
 
         connectionsManager.close()
-        AppLogger.info(s"Server '$supportIdentifier' shutdown.")
+        AppLogger.info(s"Server '$currentIdentifier' shutdown.")
     }
 
     @workerExecution
@@ -80,7 +80,7 @@ class ServerConnection(applicationContext: ServerApplication,
         WorkerPools.ensureCurrentIsWorker("Must start server connection in a worker thread.")
         if (alive)
             throw new ServerException(this, "Server is already started.")
-        AppLogger.info(s"Server '$supportIdentifier' starts on port ${configuration.port}")
+        AppLogger.info(s"Server '$currentIdentifier' starts on port ${configuration.port}")
         AppLogger.trace(s"Identifier Ambiguity Strategy : ${configuration.identifierAmbiguityStrategy}")
 
         try {
@@ -112,8 +112,8 @@ class ServerConnection(applicationContext: ServerApplication,
             return
         }
         connectionsManager.broadcastPacket(packet, attributes, injectableID, sender, discarded: _*)
-        if (!discarded.contains(supportIdentifier)) {
-            traffic.processInjection(packet, attributes, DedicatedPacketCoordinates(injectableID, supportIdentifier, sender))
+        if (!discarded.contains(currentIdentifier)) {
+            traffic.processInjection(packet, attributes, DedicatedPacketCoordinates(injectableID, currentIdentifier, sender))
         }
     }
 
@@ -281,7 +281,7 @@ class ServerConnection(applicationContext: ServerApplication,
 
     private[connection] def sendAuthorisedConnection(socket: DynamicSocket): Unit = {
         socket.write(serializeInt(1) ++ Array(Rules.ConnectionAccepted))
-        val bytes = supportIdentifier.getBytes()
+        val bytes = currentIdentifier.getBytes()
         socket.write(serializeInt(bytes.length) ++ bytes)
     }
 

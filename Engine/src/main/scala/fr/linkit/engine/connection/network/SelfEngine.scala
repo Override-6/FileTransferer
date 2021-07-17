@@ -24,7 +24,7 @@ class SelfEngine(connection: ConnectionContext,
                  state: => ExternalConnectionState,
                  override val cache: SharedCacheManager) extends Engine {
 
-    override val identifier: String = connection.supportIdentifier
+    override val identifier: String = connection.currentIdentifier
 
     override val connectionDate: Timestamp = new Timestamp(System.currentTimeMillis())
 

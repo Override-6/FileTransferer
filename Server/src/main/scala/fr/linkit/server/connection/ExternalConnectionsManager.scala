@@ -169,7 +169,7 @@ class ExternalConnectionsManager(server: ServerConnection) extends JustifiedClos
      * @return true if any connected Relay have the specified identifier
      * */
     def isRegistered(identifier: String): Boolean = {
-        identifier == server.supportIdentifier || connections.contains(identifier) //reserved server identifier
+        identifier == server.currentIdentifier || connections.contains(identifier) //reserved server identifier
     }
 
     override def isClosed: Boolean = closed

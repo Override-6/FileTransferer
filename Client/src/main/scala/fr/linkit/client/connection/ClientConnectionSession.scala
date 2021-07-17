@@ -31,9 +31,9 @@ case class ClientConnectionSession(socket: DynamicSocket,
     val appContext       : ClientApplication             = info.appContext
     val configuration    : ClientConnectionConfiguration = info.configuration
     val readThread       : PacketReaderThread            = info.readThread
-    val supportIdentifier: String                        = configuration.identifier
-    val translator       : PacketTranslator              = new DefaultPacketTranslator
-    val traffic          : PacketTraffic                 = new SocketPacketTraffic(socket, translator, appContext, supportIdentifier, serverIdentifier)
+    val currentIdentifier: String                        = configuration.identifier
+    val translator       : PacketTranslator              = configuration.translator
+    val traffic          : PacketTraffic                 = new SocketPacketTraffic(socket, translator, appContext, currentIdentifier, serverIdentifier)
     val eventNotifier    : EventNotifier                 = new DefaultEventNotifier
     val systemChannel    : SystemPacketChannel           = traffic.getInjectable(SystemChannelID, ChannelScopes.discardCurrent, SystemPacketChannel)
 

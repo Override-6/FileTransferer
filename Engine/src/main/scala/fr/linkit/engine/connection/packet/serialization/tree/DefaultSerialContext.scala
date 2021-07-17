@@ -15,10 +15,7 @@ package fr.linkit.engine.connection.packet.serialization.tree
 import fr.linkit.api.connection.network.Network
 import fr.linkit.api.connection.packet.Packet
 import fr.linkit.api.connection.packet.serialization.tree._
-import fr.linkit.engine.connection.packet.serialization.tree.DefaultSerialContext.{PacketClassNameRequest, SerialContextChannelID}
 import fr.linkit.engine.connection.packet.serialization.tree.nodes._
-import fr.linkit.engine.connection.packet.traffic.ChannelScopes
-import fr.linkit.engine.connection.packet.traffic.channel.request.RequestPacketChannel
 import fr.linkit.engine.local.mapping.ClassMappings
 import org.jetbrains.annotations.Nullable
 
@@ -55,7 +52,7 @@ class DefaultSerialContext extends SerialContext {
         if (network == null)
             throw new NullPointerException
         this.network = network
-        defaultFactories += new PuppetWrapperNode(network)
+        defaultFactories.insert(5, new PuppetWrapperNode(network))
         /*channel.addRequestListener(bundle => {
             val packet    = bundle.packet.nextPacket[PacketClassNameRequest]
             val className = ClassMappings.findClass(packet.hash).map(_.getName).orNull
@@ -78,7 +75,6 @@ class DefaultSerialContext extends SerialContext {
     defaultFactories += MapNode.ofImmutable
     defaultFactories += DateNode
     defaultFactories += ObjectNode.apply
-
 
 }
 

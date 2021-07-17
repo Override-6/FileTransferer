@@ -32,7 +32,7 @@ protected class ClientTasksHandler(private val systemChannel: SystemPacketChanne
     @volatile private var open                      = false
 
     override val tasksCompleterHandler = new SimpleCompleterHandler()
-    override val identifier: String    = connection.supportIdentifier
+    override val identifier: String    = connection.currentIdentifier
 
     override def schedule(executor: TaskExecutor, taskIdentifier: Int, targetID: String, ownFreeWill: Boolean): Unit = {
         if (targetID == identifier)

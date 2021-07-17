@@ -22,7 +22,7 @@ trait Puppeteer[S] {
 
     val repo: EngineObjectCenter[_]
 
-    val puppeteerDescription: PuppeteerInfo
+    val puppeteerInfo: PuppeteerInfo
 
     val wrapperBehavior: WrapperBehavior[S]
 

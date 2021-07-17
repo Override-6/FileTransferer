@@ -22,7 +22,7 @@ import fr.linkit.api.local.system.event.EventNotifier
 
 trait ConnectionContext extends PacketInjectableContainer with Procrastinator {
 
-    val supportIdentifier: String
+    val currentIdentifier: String
 
     def port: Int
 

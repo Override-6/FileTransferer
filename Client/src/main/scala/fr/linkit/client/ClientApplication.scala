@@ -104,14 +104,14 @@ class ClientApplication private(override val configuration: ClientApplicationCon
 
     @throws[NoSuchElementException]("If no connection is found into the application's cache.")
     def unregister(connectionContext: ExternalConnection): Unit = {
-        import connectionContext.{boundIdentifier, supportIdentifier}
+        import connectionContext.{boundIdentifier, currentIdentifier}
 
-        connectionCache.remove(supportIdentifier)
+        connectionCache.remove(currentIdentifier)
         connectionCount -= 1
         val newThreadCount = configuration.nWorkerThreadFunction(connectionCount)
         appPool.setThreadCount(newThreadCount)
 
-        AppLogger.info(s"Connection '$supportIdentifier' bound to $boundIdentifier was detached from application.")
+        AppLogger.info(s"Connection '$currentIdentifier' bound to $boundIdentifier was detached from application.")
     }
 
 }

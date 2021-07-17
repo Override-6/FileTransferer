@@ -37,7 +37,7 @@ class ServerSideNetwork(serverConnection: ServerConnection)(implicit traffic: Pa
 
     override val startUpDate: Timestamp = cache.postInstance(2, new Timestamp(System.currentTimeMillis()))
 
-    override def serverIdentifier: String = serverConnection.supportIdentifier
+    override def serverIdentifier: String = serverConnection.currentIdentifier
 
     //The current connection is the network's server connection.
     override def serverEngine: Engine = connectionEngine

@@ -23,8 +23,8 @@ class ServerPacketWriter(serverConnection: ServerConnection, info: WriterInfo) e
 
     override val identifier       : Int           = info.identifier
     override val traffic          : PacketTraffic = info.traffic
-    override val serverIdentifier : String        = serverConnection.supportIdentifier
-    override val supportIdentifier: String        = traffic.supportIdentifier
+    override val serverIdentifier : String        = serverConnection.currentIdentifier
+    override val currentIdentifier: String        = traffic.currentIdentifier
 
     //private val notifier = info.notifier
     //private val hooks = info.packetHooks
@@ -59,6 +59,6 @@ class ServerPacketWriter(serverConnection: ServerConnection, info: WriterInfo) e
     }
 
     override def writeBroadcastPacket(packet: Packet, attributes: PacketAttributes, discarded: String*): Unit = {
-        serverConnection.broadcastPacket(packet, attributes, supportIdentifier, identifier, discarded: _*)
+        serverConnection.broadcastPacket(packet, attributes, currentIdentifier, identifier, discarded: _*)
     }
 }

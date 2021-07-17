@@ -37,7 +37,7 @@ class ServerExternalConnection private(val session: ExternalConnectionSession) e
 
     import session._
 
-    override val supportIdentifier: String           = server.supportIdentifier
+    override val currentIdentifier: String           = server.currentIdentifier
     override val traffic          : PacketTraffic    = server.traffic
     override val translator       : PacketTranslator = server.translator
     override val eventNotifier    : EventNotifier    = server.eventNotifier
@@ -57,8 +57,8 @@ class ServerExternalConnection private(val session: ExternalConnectionSession) e
         readThread.close()
         session.close()
 
-        connectionManager.unregister(supportIdentifier)
-        AppLogger.trace(s"Connection closed for $supportIdentifier")
+        connectionManager.unregister(currentIdentifier)
+        AppLogger.trace(s"Connection closed for $currentIdentifier")
     }
 
     override def isAlive: Boolean = alive
@@ -94,7 +94,7 @@ class ServerExternalConnection private(val session: ExternalConnectionSession) e
 
     def sendPacket(packet: Packet, attributes: PacketAttributes, channelID: Int): Unit = {
         runLater {
-            val coords       = DedicatedPacketCoordinates(channelID, boundIdentifier, server.supportIdentifier)
+            val coords       = DedicatedPacketCoordinates(channelID, boundIdentifier, server.currentIdentifier)
             val transferInfo = SimpleTransferInfo(coords, attributes, packet)
             val result       = translator.translate(transferInfo)
             session.send(result)

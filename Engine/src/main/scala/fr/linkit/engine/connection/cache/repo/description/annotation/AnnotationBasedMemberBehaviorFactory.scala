@@ -39,7 +39,7 @@ class AnnotationBasedMemberBehaviorFactory(handler: RMIHandler = SimpleRMIHandle
         val control            = Option(javaMethod.getAnnotation(classOf[MethodControl])).getOrElse(DefaultMethodControl)
         val synchronizedParams = getSynchronizedParams(desc.symbol)
         val invocationKind     = control.value()
-        val invokeOnly         = Option(javaMethod.getAnnotation(classOf[InvokeOnly]))
+        val invokeOnly         = control.invokeOnly()
         val isHidden           = control.hide()
         val syncReturnValue    = control.synchronizeReturnValue()
         MethodBehavior(
@@ -67,6 +67,8 @@ object AnnotationBasedMemberBehaviorFactory {
             override def synchronizeReturnValue(): Boolean = false
 
             override def hide(): Boolean = false
+
+            override def invokeOnly(): Boolean = false
 
             override def annotationType(): Class[_ <: java.lang.annotation.Annotation] = getClass
         }

@@ -46,8 +46,8 @@ class ClientConnection private(session: ClientConnectionSession) extends Externa
 
     initPacketReader()
 
-    override val supportIdentifier: String            = configuration.identifier
-    override val translator       : PacketTranslator  = new DefaultPacketTranslator()
+    override val currentIdentifier: String            = configuration.identifier
+    override val translator       : PacketTranslator  = configuration.translator
     override val port             : Int               = configuration.remoteAddress.getPort
     override val eventNotifier    : EventNotifier     = session.eventNotifier
     override val traffic          : PacketTraffic     = session.traffic
@@ -97,7 +97,7 @@ class ClientConnection private(session: ClientConnectionSession) extends Externa
     private def initPacketReader(): Unit = {
         WorkerPools.ensureCurrentIsWorker("Can't start in a non worker pool !")
         if (alive)
-            throw new IllegalStateException(s"Connection already started ! ($supportIdentifier)")
+            throw new IllegalStateException(s"Connection already started ! ($currentIdentifier)")
         alive = true
 
         socket.addConnectionStateListener(tryReconnect)
@@ -117,7 +117,7 @@ class ClientConnection private(session: ClientConnectionSession) extends Externa
 
     @packetWorkerExecution //So the runLater must be specified in order to perform network operations
     private def tryReconnect(state: ExternalConnectionState): Unit = {
-        val bytes         = supportIdentifier.getBytes()
+        val bytes         = currentIdentifier.getBytes()
         val welcomePacket = NumberSerializer.serializeInt(bytes.length) ++ bytes
 
         if (state == ExternalConnectionState.CONNECTED && socket.isOpen) runLater {
@@ -172,7 +172,7 @@ object ClientConnection {
              configuration: ClientConnectionConfiguration): ClientConnection = {
 
         //Initializing values that will be used for packet transactions during the initialization.
-        val translator   = new DefaultPacketTranslator()
+        val translator   = configuration.translator
         val packetReader = new DefaultPacketReader(socket, BytesHasher.inactive, context, translator)
 
         //WelcomePacket informational fields

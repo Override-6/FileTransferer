@@ -14,7 +14,7 @@ package fr.linkit.engine.connection.cache.repo.tree
 
 import fr.linkit.api.connection.cache.repo.description.TreeViewBehavior
 import fr.linkit.api.connection.cache.repo.tree.SyncNode
-import fr.linkit.api.connection.cache.repo.{Chip, Puppeteer}
+import fr.linkit.api.connection.cache.repo.{Chip, PuppetWrapper, Puppeteer}
 import fr.linkit.engine.connection.cache.repo.NoSuchPuppetException
 import fr.linkit.engine.connection.cache.repo.invokation.remote.InvocationPacket
 import fr.linkit.engine.connection.packet.UnexpectedPacketException
@@ -24,12 +24,11 @@ import org.jetbrains.annotations.Nullable
 
 import java.util.concurrent.ThreadLocalRandom
 import scala.collection.mutable
-import scala.reflect.ClassTag
 
 class PuppetNode[A](override val puppeteer: Puppeteer[A], //Remote invocation
                     override val chip: Chip[A], //Reflective invocation
                     val descriptions: TreeViewBehavior,
-                    val isOwner: Boolean,
+                    val platformIdentifier: String,
                     id: Int,
                     @Nullable override val parent: SyncNode[_]) extends MemberSyncNode[A] {
 
@@ -39,7 +38,12 @@ class PuppetNode[A](override val puppeteer: Puppeteer[A], //Remote invocation
      * */
     protected val members         = new mutable.HashMap[Int, SyncNode[_]]
 
-    override def addChild(id: Int, node: this.type => SyncNode[_]): Unit = members.put(id, node(this))
+    override def addChild(id: Int, node: this.type => SyncNode[_]): Unit = {
+        val n    = node(this)
+        val last = members.put(id, n)
+        if (last.isDefined)
+            throw new IllegalStateException(s"Puppet already exists at ${puppeteer.puppeteerInfo.treeViewPath.mkString("$", " -> ", s" -> $id")}")
+    }
 
     override def getChild[B](id: Int): Option[SyncNode[B]] = members.get(id) match {
         case None        => None
@@ -48,8 +52,6 @@ class PuppetNode[A](override val puppeteer: Puppeteer[A], //Remote invocation
             case _                   => None
         }
     }
-
-    override def getChildren: Map[Int, SyncNode[_]] = members.toMap
 
     override def getID: Int = id
 
@@ -68,27 +70,19 @@ class PuppetNode[A](override val puppeteer: Puppeteer[A], //Remote invocation
         makeMemberInvocation(packet, response)
     }
 
-    private def synchronizedArgs(synchronizedParams: Array[Int], args: Array[Any]): Array[Any] = {
-        val v = synchronizedParams
-                .zip(args)
-                .map(pair => if (pair._1 != -1) puppeteer.synchronizedObj(pair._2, pair._1) else pair._2)
-        v
-    }
-
     private def makeMemberInvocation(packet: InvocationPacket, response: ResponseSubmitter): Unit = {
         val methodID = packet.methodID
 
         var result = chip.callMethod(methodID, packet.params)
-        if (isOwner) {
+        if (packet.expectedEngineIDReturn == platformIdentifier) {
             val methodBehavior    = puppeteer.wrapperBehavior.getMethodBehavior(methodID)
             val canSyncReturnType = methodBehavior.get.syncReturnValue
-            if (result != null && canSyncReturnType) {
-                implicit val resultCT: ClassTag[_] = ClassTag(result.getClass)
+            if (result != null && canSyncReturnType && !result.isInstanceOf[PuppetWrapper[_]]) {
                 val id             = ThreadLocalRandom.current().nextInt()
                 val synchronizer   = puppeteer.repo
                 val resultNodePath = treeViewPath ++ Array(id)
 
-                synchronizer.genSynchronizedObject(resultNodePath, result, ownerID, descriptions)
+                result = synchronizer.genSynchronizedObject(resultNodePath, result, ownerID, descriptions)
             }
             response
                     .addPacket(RefPacket[Any](result))

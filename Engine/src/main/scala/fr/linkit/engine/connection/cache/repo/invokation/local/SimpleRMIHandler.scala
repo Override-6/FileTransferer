@@ -34,7 +34,7 @@ object SimpleRMIHandler extends RMIHandler {
         }
         // From here we are sure that we want to perform a remote
         // method invocation. (A Local invocation (super.xxx()) can be added).
-        if (methodBehavior.isInvokeOnly) {
+        if (methodBehavior.invokeOnly) {
             AppLogger.debug("Invoke Only: Sending invocation request.")
             puppeteer.sendInvoke(id, args)
             var localResult: Any = defaultReturnValue

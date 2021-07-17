@@ -12,6 +12,7 @@
 
 package fr.linkit.api.local.system.config
 
+import fr.linkit.api.connection.packet.serialization.PacketTranslator
 import fr.linkit.api.local.system.security.BytesHasher
 
 trait ConnectionConfiguration {
@@ -21,5 +22,7 @@ trait ConnectionConfiguration {
     val identifier: String
 
     val hasher: BytesHasher
+
+    val translator: PacketTranslator
 
 }

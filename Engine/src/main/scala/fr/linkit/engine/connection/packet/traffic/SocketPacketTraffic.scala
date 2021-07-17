@@ -20,8 +20,8 @@ import org.jetbrains.annotations.NotNull
 class SocketPacketTraffic(@NotNull socket: DynamicSocket,
                           @NotNull translator: PacketTranslator,
                           @NotNull procrastinator: Procrastinator,
-                          @NotNull override val supportIdentifier: String,
-                          @NotNull override val serverIdentifier: String) extends AbstractPacketTraffic(supportIdentifier, procrastinator) {
+                          @NotNull override val currentIdentifier: String,
+                          @NotNull override val serverIdentifier: String) extends AbstractPacketTraffic(currentIdentifier, procrastinator) {
 
     override def newWriter(identifier: Int): PacketWriter = {
         new SocketPacketWriter(socket, translator, WriterInfo(this, identifier))

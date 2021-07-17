@@ -14,6 +14,7 @@ package fr.linkit.engine.connection.packet.serialization.tree
 
 import fr.linkit.api.connection.packet.serialization.tree.SerializableClassDescription
 import fr.linkit.api.connection.packet.serialization.tree.SerializableClassDescription.Fields
+import fr.linkit.engine.connection.packet.serialization.tree.ClassDescription.Synthetic
 import fr.linkit.engine.local.utils.NumberSerializer
 
 import java.lang.reflect.{Field, Modifier}
@@ -23,6 +24,7 @@ class ClassDescription(val clazz: Class[_]) extends SerializableClassDescription
     val serializableFields: List[Fields] = listSerializableFields(clazz)
     val signItemCount     : Int          = serializableFields.length - 1
     val classCode         : Array[Byte]  = NumberSerializer.serializeInt(clazz.getName.hashCode)
+
 
     override def foreachDeserializableFields(action: (Int, Field) => Unit): Unit = {
         var i = 0
@@ -44,7 +46,7 @@ class ClassDescription(val clazz: Class[_]) extends SerializableClassDescription
                 return Seq.empty
             val fields = cl.getDeclaredFields
             fields
-                    .filterNot(p => Modifier.isTransient(p.getModifiers) || Modifier.isStatic(p.getModifiers))
+                    .filterNot(p => Modifier.isTransient(p.getModifiers) || Modifier.isStatic(p.getModifiers) || ((p.getModifiers & Synthetic) == Synthetic))
                     .tapEach(_.setAccessible(true))
                     .toList ++ listAllSerialFields(cl.getSuperclass)
         }
@@ -57,5 +59,9 @@ class ClassDescription(val clazz: Class[_]) extends SerializableClassDescription
         //}
     }
 
+}
+
+object ClassDescription {
+    private val Synthetic = 0x00001000
 }
 

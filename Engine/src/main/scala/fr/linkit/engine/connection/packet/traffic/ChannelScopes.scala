@@ -96,7 +96,7 @@ object ChannelScopes {
 
     def broadcast: ScopeFactory[BroadcastScope] = BroadcastScope(_)
 
-    def discardCurrent: ScopeFactory[BroadcastScope] = writer => BroadcastScope(writer, writer.supportIdentifier)
+    def discardCurrent: ScopeFactory[BroadcastScope] = writer => BroadcastScope(writer, writer.currentIdentifier)
 
     def discards(discarded: String*): ScopeFactory[BroadcastScope] = BroadcastScope(_, discarded: _*)
 

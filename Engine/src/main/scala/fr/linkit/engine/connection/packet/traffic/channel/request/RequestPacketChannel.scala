@@ -34,7 +34,7 @@ class RequestPacketChannel(@Nullable parent: PacketChannel, scope: ChannelScope)
     @volatile private var requestCount = 0
 
     //debug only
-    private val source = scope.traffic.supportIdentifier
+    private val source = scope.traffic.currentIdentifier
 
     AppLogger.vDebug(s"Created $this, of parent $parent")
 

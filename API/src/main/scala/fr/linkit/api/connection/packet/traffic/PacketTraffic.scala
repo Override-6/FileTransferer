@@ -20,7 +20,7 @@ import fr.linkit.api.local.system.JustifiedCloseable
 
 trait PacketTraffic extends JustifiedCloseable with PacketInjectableContainer {
 
-    val supportIdentifier: String
+    val currentIdentifier: String
 
     val serverIdentifier: String
 

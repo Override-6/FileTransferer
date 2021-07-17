@@ -11,7 +11,7 @@ trait SyncNode[A] {
         var parent: SyncNode[_] = this
         val buff                = ListBuffer.empty[Int]
         while (parent != null) {
-            buff += parent.getID
+            buff.insert(0, parent.getID)
             parent = parent.parent
         }
         buff.toArray
@@ -23,8 +23,6 @@ trait SyncNode[A] {
     def getID: Int
 
     @Nullable val parent: SyncNode[_]
-
-    def getChildren: Map[Int, SyncNode[_]]
 
     def getChild[B](id: Int): Option[SyncNode[B]]
 

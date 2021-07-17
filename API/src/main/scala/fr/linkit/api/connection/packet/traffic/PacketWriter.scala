@@ -17,7 +17,7 @@ import fr.linkit.api.connection.packet.{Packet, PacketAttributes}
 trait PacketWriter {
 
     val serverIdentifier : String
-    val supportIdentifier: String
+    val currentIdentifier: String
     val identifier       : Int
     val traffic          : PacketTraffic
 

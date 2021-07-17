@@ -29,15 +29,15 @@ import java.util.concurrent.ThreadLocalRandom
 
 class InstancePuppeteer[S](channel: RequestPacketChannel,
                            override val repo: EngineObjectCenter[_],
-                           override val puppeteerDescription: PuppeteerInfo,
+                           override val puppeteerInfo: PuppeteerInfo,
                            val wrapperBehavior: WrapperBehavior[S]) extends Puppeteer[S] {
 
-    override val ownerID     : String                  = puppeteerDescription.owner
+    override val ownerID     : String                  = puppeteerInfo.owner
     private  val bcScope                               = prepareScope(ChannelScopes.discardCurrent)
     private  val ownerScope                            = prepareScope(ChannelScopes.retains(ownerID))
     private var puppetWrapper: S with PuppetWrapper[S] = _
 
-    override def isCurrentEngineOwner: Boolean = ownerID == channel.traffic.supportIdentifier
+    override def isCurrentEngineOwner: Boolean = ownerID == channel.traffic.currentIdentifier
 
     override def getPuppetWrapper: S with PuppetWrapper[S] = puppetWrapper
 
@@ -47,9 +47,9 @@ class InstancePuppeteer[S](channel: RequestPacketChannel,
         }
 
         AppLogger.debug(s"Remotely invoking method ${bhv.desc.symbol.name}")
-        val treeViewPath = puppeteerDescription.treeViewPath
+        val treeViewPath = puppeteerInfo.treeViewPath
         val result       = channel.makeRequest(chooseScope(bhv.invocationKind))
-                .addPacket(InvocationPacket(treeViewPath, methodId, args))
+                .addPacket(InvocationPacket(treeViewPath, methodId, args, null))//TODO
                 .submit()
                 .nextResponse
                 .nextPacket[RefPacket[R]].value
@@ -66,7 +66,7 @@ class InstancePuppeteer[S](channel: RequestPacketChannel,
         }
         AppLogger.debug(s"Remotely invoking method ${bhv.desc.symbol.name}(${args.mkString(",")})")
         channel.makeRequest(chooseScope(bhv.invocationKind))
-                .addPacket(InvocationPacket(puppeteerDescription.treeViewPath, methodId, args))
+                .addPacket(InvocationPacket(puppeteerInfo.treeViewPath, methodId, args, null))//TODO
                 .submit()
                 .detach()
     }
@@ -80,7 +80,7 @@ class InstancePuppeteer[S](channel: RequestPacketChannel,
 
 
     override def synchronizedObj(obj: Any, id: Int = ThreadLocalRandom.current().nextInt()): Any = {
-        val currentPath = puppeteerDescription.treeViewPath
+        val currentPath = puppeteerInfo.treeViewPath
         val objPath     = currentPath ++ Array(id)
         val defaults    = repo.defaultTreeViewBehavior
         repo.genSynchronizedObject(objPath, obj, ownerID, defaults)

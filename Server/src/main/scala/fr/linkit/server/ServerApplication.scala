@@ -62,7 +62,7 @@ class ServerApplication private(override val configuration: ServerApplicationCon
         val shutdownTask         = WorkerPools.currentTask
 
         listConnections.foreach((serverConnection: ServerConnection) => serverConnection.runLater {
-            wrapCloseAction(s"Server connection ${serverConnection.supportIdentifier}") {
+            wrapCloseAction(s"Server connection ${serverConnection.currentIdentifier}") {
                 serverConnection.shutdown()
             }
             downCount += 1

@@ -20,14 +20,14 @@ import fr.linkit.api.local.concurrency.WorkerPools.currentTasksId
 
 import scala.collection.mutable
 
-class ParallelInjectionContainer(supportIdentifier: String) extends InjectionContainer {
+class ParallelInjectionContainer(currentIdentifier: String) extends InjectionContainer {
 
     private val processingInjections = new mutable.LinkedHashMap[(Int, String), ParallelInjection]
 
     override def makeInjection(bundle: Bundle): PacketInjectionController = {
         val dedicated = bundle.coords match {
             case dedicated: DedicatedPacketCoordinates => dedicated
-            case broadcast: BroadcastPacketCoordinates => broadcast.getDedicated(supportIdentifier)
+            case broadcast: BroadcastPacketCoordinates => broadcast.getDedicated(currentIdentifier)
             case _                                     => throw new UnsupportedOperationException("Attempted to perform an injection with unknown PacketCoordinates implementation.")
         }
         makeInjection(bundle.packet, bundle.attributes, dedicated)

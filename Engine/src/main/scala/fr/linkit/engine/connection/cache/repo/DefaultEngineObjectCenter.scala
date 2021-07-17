@@ -53,7 +53,7 @@ class DefaultEngineObjectCenter[A](handler: SharedCacheManager,
 
     override val center                = new DefaultPuppetCenter[A]
     private  val fieldRestorer         = new FieldRestorer
-    private  val supportIdentifier     = channel.traffic.supportIdentifier
+    private  val currentIdentifier     = channel.traffic.currentIdentifier
 
     override def postObject[B <: A : ClassTag : TypeTag](id: Int, obj: B): B with PuppetWrapper[B] = {
         postObject[B](id, obj, defaultTreeViewBehavior.getFromClass(obj.getClass.asInstanceOf[Class[B]]))
@@ -65,9 +65,9 @@ class DefaultEngineObjectCenter[A](handler: SharedCacheManager,
             throw new ObjectAlreadyPostException(s"Another object with id '$id' figures in the repo's list.")
 
         val path    = Array(id)
-        val wrapper = localRegisterRemotePuppet[B](Array(id), supportIdentifier, obj, behavior)
+        val wrapper = localRegisterRemotePuppet[B](Array(id), currentIdentifier, obj, behavior)
         channel.makeRequest(ChannelScopes.discardCurrent)
-                .addPacket(ObjectPacket(PuppetProfile(path, obj, supportIdentifier)))
+                .addPacket(ObjectPacket(PuppetProfile(path, obj, currentIdentifier)))
                 .putAllAttributes(this)
                 .submit()
 
@@ -146,8 +146,7 @@ class DefaultEngineObjectCenter[A](handler: SharedCacheManager,
 
             val chip      = ObjectChip[Any](ownerID, behavior, wrapper)
             val puppeteer = wrapper.getPuppeteer
-            val isOwner   = this.channel.traffic.supportIdentifier == ownerID
-            center.addNode(treeViewPath, (id, parent: SyncNode[_]) => new PuppetNode(puppeteer, chip, behavior.treeView, isOwner, id, parent))
+            center.addNode(treeViewPath, (id, parent: SyncNode[_]) => new PuppetNode(puppeteer, chip, behavior.treeView, this.channel.traffic.currentIdentifier, id, parent))
         }
 
         ensureNotWrapped(obj)
@@ -185,7 +184,7 @@ class DefaultEngineObjectCenter[A](handler: SharedCacheManager,
             val owner  = profile.owner
             val path   = profile.treeViewPath
             //it's an object that must be chipped by this current repo cache (owner is the same as current identifier)
-            if (owner == supportIdentifier) {
+            if (owner == currentIdentifier) {
                 center.getNode[A](path).fold {
                     throw new IllegalArgumentException(s"Unknown local object of path '${path.mkString("$", " -> ", "")}'")
                 }(_.chip.updateObject(puppet))
@@ -199,7 +198,7 @@ class DefaultEngineObjectCenter[A](handler: SharedCacheManager,
     }
 
     private def localRegisterRemotePuppet[B <: A : ClassTag](path: Array[Int], owner: String, puppet: B, behavior: WrapperBehavior[B]): B with PuppetWrapper[B] = {
-        val isIntended = owner == supportIdentifier
+        val isIntended = owner == currentIdentifier
 
         var parent           = center.getNode[B](path)
         val treeViewBehavior = behavior.treeView

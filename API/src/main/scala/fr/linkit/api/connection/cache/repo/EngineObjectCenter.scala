@@ -12,16 +12,16 @@
 
 package fr.linkit.api.connection.cache.repo
 
-import fr.linkit.api.connection.cache.repo.description.{TreeViewBehavior, WrapperBehavior}
+import fr.linkit.api.connection.cache.repo.description.{PuppeteerInfo, TreeViewBehavior, WrapperBehavior}
 import fr.linkit.api.connection.cache.repo.tree.PuppetCenter
 import fr.linkit.api.connection.packet.PacketAttributesPresence
 
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
-trait EngineObjectCenter[A <: Serializable] extends ObjectSynchronizer with PacketAttributesPresence {
+trait EngineObjectCenter[A] extends ObjectSynchronizer with PacketAttributesPresence {
 
-    val center: PuppetCenter[A]
+    val center: PuppetCenter
 
     val defaultTreeViewBehavior: TreeViewBehavior
 
@@ -31,11 +31,10 @@ trait EngineObjectCenter[A <: Serializable] extends ObjectSynchronizer with Pack
 
     def findObject[B <: A](id: Int): Option[B with PuppetWrapper[B]]
 
-    def initPuppetWrapper[B <: A](wrapper: B with PuppetWrapper[B]): Unit
+    def initAsWrapper[B <: A](puppet: B, info: PuppeteerInfo): B with PuppetWrapper[B]
 
     def getOrElse[U >: A](id: Int, orElse: => U): U = findObject(id).getOrElse(orElse)
 
     def isRegistered(id: Int): Boolean
 
-    def initPuppetWrapper[B <: A](wrapper: B with PuppetWrapper[B], behavior: WrapperBehavior[B]): Unit
 }

@@ -14,11 +14,11 @@ package fr.linkit.api.connection.cache.repo.tree
 
 import fr.linkit.api.connection.cache.CacheContent
 
-trait PuppetCenter[A] {
+trait PuppetCenter {
 
-    def getNode[B <: A](path: Array[Int]): Option[SyncNode[B]]
+    def getNode[B](path: Array[Int]): Option[SyncNode[B]]
 
-    def addPuppet[B <: A](path: Array[Int], obj: SyncNode[_] => SyncNode[B]): Unit
+    def addNode[B](path: Array[Int], obj: (Int, SyncNode[_]) => SyncNode[B]): Unit
 
     def snapshotContent: CacheContent
 }

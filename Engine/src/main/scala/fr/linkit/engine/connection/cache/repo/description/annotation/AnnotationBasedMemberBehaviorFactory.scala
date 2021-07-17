@@ -13,25 +13,38 @@
 package fr.linkit.engine.connection.cache.repo.description.annotation
 
 import fr.linkit.api.connection.cache.repo.description._
-import fr.linkit.api.connection.cache.repo.description.annotation.{FieldControl, InvocationKind, InvokeOnly, MethodControl}
-import fr.linkit.engine.connection.cache.repo.description.SimpleWrapperBehavior.toSynchronisedParamsIndexes
+import fr.linkit.api.connection.cache.repo.description.annotation._
 import fr.linkit.engine.connection.cache.repo.description.annotation.AnnotationBasedMemberBehaviorFactory.DefaultMethodControl
 import fr.linkit.engine.connection.cache.repo.invokation.local.SimpleRMIHandler
 
+import scala.reflect.runtime.universe
+
 class AnnotationBasedMemberBehaviorFactory(handler: RMIHandler = SimpleRMIHandler) extends MemberBehaviorFactory {
+
+    def getSynchronizedParams(symbol: universe.MethodSymbol): Seq[Boolean] = {
+        val params = symbol
+                .paramLists
+                .flatten
+                .map(_.annotations
+                        .exists(_.tree
+                                .tpe
+                                .typeSymbol
+                                .fullName == classOf[SynchronizeParam].getName)
+                )
+        params
+    }
 
     override def genMethodBehavior(desc: MethodDescription): MethodBehavior = {
         val javaMethod         = desc.javaMethod
         val control            = Option(javaMethod.getAnnotation(classOf[MethodControl])).getOrElse(DefaultMethodControl)
-        val synchronizedParams = toSynchronisedParamsIndexes(control.mutates(), desc.symbol)
+        val synchronizedParams = getSynchronizedParams(desc.symbol)
         val invocationKind     = control.value()
         val invokeOnly         = Option(javaMethod.getAnnotation(classOf[InvokeOnly]))
-        val isPure             = control.pure() && control.mutates().nonEmpty
         val isHidden           = control.hide()
         val syncReturnValue    = control.synchronizeReturnValue()
         MethodBehavior(
             desc, invokeOnly, synchronizedParams,
-            invocationKind, syncReturnValue, isPure, isHidden, handler
+            invocationKind, syncReturnValue, isHidden, handler
         )
     }
 
@@ -50,10 +63,6 @@ object AnnotationBasedMemberBehaviorFactory {
     private val DefaultMethodControl: MethodControl = {
         new MethodControl {
             override def value(): InvocationKind = InvocationKind.LOCAL_AND_REMOTES
-
-            override def pure(): Boolean = false
-
-            override def mutates(): String = ""
 
             override def synchronizeReturnValue(): Boolean = false
 

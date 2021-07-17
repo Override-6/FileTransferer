@@ -37,16 +37,12 @@ class $WrappedClassSimpleName$Wrapper$TParamsIn$ extends AbstractPuppetWrapper[$
     //They does not affect abstraction or classes behaviors.
     //Override annotations are removed at compilation.
 
-    override def wrappedClass: Class[_] = $WrappedClassSimpleName$Wrapper.WrappedClass
+    override def wrappedClass: Class[_] = classOf[$WrappedClassSimpleName$$TParamsInBusted$]
 
 !!INHERITED_METHODS!! {
     $Override$ def $MethodName$$GenericTypesIn$$ParamsIn$: $ReturnType$ = {
-        handleCall[$ReturnType$]($MethodID$, $DefaultReturnValue$)(Array($ParamsOutArray$))(Array(this, $ParamsOutArray$): Any)
+        handleCall[$ReturnType$]($MethodID$, $DefaultReturnValue$)(Array($ParamsOutFlatten$))(args => this: Any)
     }
 }
 
-}
-
-object $WrappedClassSimpleName$Wrapper {
-    val WrappedClass: Class[_] = classOf[$WrappedClassSimpleName$$TParamsInBusted$]
 }

@@ -16,7 +16,7 @@ import fr.linkit.api.connection.network.Network
 import fr.linkit.api.connection.packet.serialization._
 import fr.linkit.api.connection.packet.{Packet, PacketAttributes, PacketCoordinates}
 
-class SimplePacketTranslator extends PacketTranslator {
+class DefaultPacketTranslator extends PacketTranslator {
 
     private val serializer = new DefaultSerializer()
 

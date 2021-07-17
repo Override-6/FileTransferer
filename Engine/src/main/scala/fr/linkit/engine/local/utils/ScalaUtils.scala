@@ -139,7 +139,7 @@ object ScalaUtils {
         TheUnsafe.allocateInstance(clazz).asInstanceOf[A]
     }
 
-    private def retrieveAllFields(clazz: Class[_]): Seq[Field] = {
+    def retrieveAllFields(clazz: Class[_]): Seq[Field] = {
         var superClass = clazz
         var superFields = Seq.empty[Field]
         while (superClass != null) {

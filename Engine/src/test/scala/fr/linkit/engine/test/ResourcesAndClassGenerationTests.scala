@@ -24,12 +24,11 @@ import fr.linkit.api.local.system.{AppLogger, Version}
 import fr.linkit.engine.connection.cache.repo.CacheRepoContent
 import fr.linkit.engine.connection.cache.repo.DefaultEngineObjectCenter.PuppetProfile
 import fr.linkit.engine.connection.cache.repo.description.annotation.AnnotationBasedMemberBehaviorFactory
-import fr.linkit.engine.connection.cache.repo.description.{SimplePuppetClassDescription, SimpleWrapperBehavior, TreeViewDefaultBehaviors}
+import fr.linkit.engine.connection.cache.repo.description.{SimplePuppetClassDescription, SimpleWrapperBehavior, TreeViewDefaultBehavior}
 import fr.linkit.engine.connection.cache.repo.generation.{CloneHelper, PuppetWrapperClassGenerator, WrappersClassResource}
 import fr.linkit.engine.connection.cache.repo.invokation.remote.InstancePuppeteer
 import fr.linkit.engine.connection.packet.fundamental.RefPacket.AnyRefPacket
-import fr.linkit.engine.connection.packet.serialization.DefaultSerializer
-import fr.linkit.engine.connection.packet.serialization.tree.{DefaultClassProfile, DefaultSerialContext}
+import fr.linkit.engine.connection.packet.serialization.{DefaultSerializer, FSTSerializer}
 import fr.linkit.engine.connection.packet.traffic.channel.request.ResponsePacket
 import fr.linkit.engine.local.LinkitApplication
 import fr.linkit.engine.local.generation.compilation.access.DefaultCompilerCenter
@@ -68,6 +67,7 @@ class ResourcesAndClassGenerationTests {
 
         resources = LinkitApplication.prepareApplication(testVersion, config, Seq(getClass))
         Mockito.when(app.getAppResources).thenReturn(resources)
+        Mockito.when(app.compilerCenter).thenReturn(new DefaultCompilerCenter)
         LinkitApplication.setInstance(app)
         AppLogger.useVerbose = true
     }
@@ -87,9 +87,9 @@ class ResourcesAndClassGenerationTests {
         val wrapper = forObject(new util.ArrayList[String]())
 
         val packet          = ArrayBuffer(DedicatedPacketCoordinates(12, "s1", "TestServer1"), ResponsePacket(7, Array(AnyRefPacket(Some(CacheRepoContent(Array(PuppetProfile(Array(0), wrapper, "TestServer1"))))))))
-        val testPacketBytes = new DefaultSerializer().serialize(packet, true)
+        val testPacketBytes = new FSTSerializer().serialize(packet, true)
         println(s"Serialized testedPacket : ${ScalaUtils.toPresentableString(testPacketBytes)}")
-        val rePacket = Assertions.assertInstanceOf(packet.getClass, new DefaultSerializer().deserialize(testPacketBytes))
+        val rePacket = Assertions.assertInstanceOf(packet.getClass, new FSTSerializer().deserialize(testPacketBytes))
         println(s"resulting packet = ${rePacket.mkString("Array(", ", ", ")")}")
 
     }
@@ -132,15 +132,14 @@ class ResourcesAndClassGenerationTests {
 
     @Test
     @Order(3)
-    def generateComplexScalaClass(): Unit = {
+    def generateComplexScalaClass(): Unit = InvocationChoreographer.forceLocalInvocation {
         val obj = forObject(ListBuffer.empty[String])
-        /*for (i <- 0 to 1000)
-            println(s"obj.getClass.getDeclaredFields = ${obj.getClass.getDeclaredFields.mkString("Array(", ", ", ")")}")*/
 
-        println("Adding...")
-        obj addOne "LOLn't"
-        println(s"Added !")
-        println(s"obj = $obj")
+        val serial = new DefaultSerializer()
+        val bytes = serial.serialize(obj, true)
+        println(s"ScalaUtils.toPresentableString(bytes) = ${ScalaUtils.toPresentableString(bytes)}")
+        val result = serial.deserialize(bytes)
+        println(s"result = ${result}")
     }
 
     class ListBufferImpl extends ListBuffer[String] {
@@ -150,26 +149,6 @@ class ResourcesAndClassGenerationTests {
             //super.addOne(elem)
             this
         }
-    }
-
-    @Test
-    def classModificationTests(): Unit = {
-        /*val path = Path.of("C:\\Users\\maxim\\Desktop\\BCScanning\\PuppetListBufferExtendingListBufferAndWithSuperCalls.class")
-        val bytes = Files.readAllBytes(path)
-        val result = ListBuffer.from(Files.readAllBytes(path))
-        val fileBuff = ByteBuffer.wrap(bytes)
-
-        if (fileBuff.order(ByteOrder.BIG_ENDIAN).getInt != 0xcafebabe) //Head
-            throw new IllegalClassFormatException()
-
-        val minor: Int = fileBuff.getChar
-        val version: Int = fileBuff.getChar
-        println(s"class file version: $version.$minor")
-        val constantPoolLength: Int = fileBuff.getChar
-        println(s"constantPoolLength = ${constantPoolLength}")
-
-        println("end.")
-        println(s"Next flag is : ${fileBuff.get}")*/
     }
 
     @Test
@@ -187,11 +166,8 @@ class ResourcesAndClassGenerationTests {
         val puppetClass = generator.getPuppetClass[A](cl)
         println(s"puppetClass = ${puppetClass}")
         val factory = AnnotationBasedMemberBehaviorFactory()
-        val pup     = new InstancePuppeteer[A](null, null, PuppeteerInfo("", 8, "", Array(1)), SimpleWrapperBehavior(SimplePuppetClassDescription[A](cl), new TreeViewDefaultBehaviors(factory), factory))
+        val pup     = new InstancePuppeteer[A](null, null, PuppeteerInfo("", 8, "", Array(1)), SimpleWrapperBehavior(SimplePuppetClassDescription[A](cl), new TreeViewDefaultBehavior(factory)))
         val puppet  = CloneHelper.instantiateFromOrigin[A](puppetClass, obj)
-
-        val profile = new DefaultClassProfile[A with PuppetWrapper[A]](puppetClass, new DefaultSerialContext)
-        println(s"profile = ${profile}")
 
         puppet.initPuppeteer(pup)
         puppet.getChoreographer.forceLocalInvocation {

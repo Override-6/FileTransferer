@@ -19,7 +19,7 @@ import scala.collection.mutable
 import scala.reflect.runtime.universe
 import scala.reflect.{ClassTag, classTag}
 
-class TreeViewDefaultBehaviors(memberBehaviorFactory: MemberBehaviorFactory) extends TreeViewBehavior {
+class TreeViewDefaultBehavior(override val factory: MemberBehaviorFactory) extends TreeViewBehavior {
 
     private val behaviors = mutable.HashMap.empty[Class[_], WrapperBehavior[_]]
 
@@ -32,7 +32,7 @@ class TreeViewDefaultBehaviors(memberBehaviorFactory: MemberBehaviorFactory) ext
     }
 
     private def getFromAnyClass[B](clazz: Class[_]): WrapperBehavior[B] = {
-        behaviors.getOrElseUpdate(clazz, SimpleWrapperBehavior(SimplePuppetClassDescription(clazz), this, memberBehaviorFactory))
+        behaviors.getOrElseUpdate(clazz, SimpleWrapperBehavior(SimplePuppetClassDescription(clazz), this))
                 .asInstanceOf[WrapperBehavior[B]]
     }
 

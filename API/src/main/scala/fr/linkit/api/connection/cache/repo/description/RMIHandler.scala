@@ -19,6 +19,9 @@ import fr.linkit.api.connection.cache.repo.PuppetWrapper
  * */
 trait RMIHandler {
 
-    def handleRMI[R](wrapper: PuppetWrapper[_])(id: Int, defaultReturnValue: R)(args: Array[Array[Any]])(superCall: => R = null): R
+    def handleRMI[R](wrapper: PuppetWrapper[_])
+                    (id: Int, defaultReturnValue: R)
+                    (args: Array[Any])
+                    (superCall: => R = null): R
 
 }

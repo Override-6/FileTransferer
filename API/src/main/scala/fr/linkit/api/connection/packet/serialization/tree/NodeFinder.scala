@@ -15,9 +15,9 @@ import scala.reflect.ClassTag
 
 trait NodeFinder extends ClassProfileHandler {
 
-    def getSerialNodeForRef[T: ClassTag](any: T): SerialNode[T]
+    def getSerialNodeForRef[T: ClassTag](any: T, discard: Seq[Class[_ <: NodeFactory[_]]] = Seq.empty): SerialNode[T]
 
-    def getSerialNodeForType[T](clazz: Class[_]): SerialNode[T]
+    def getSerialNodeForType[T](clazz: Class[_], discard: Seq[Class[_ <: NodeFactory[_]]] = Seq.empty): SerialNode[T]
 
     def getDeserialNodeFor[T](bytes: Array[Byte]): DeserialNode[T]
 

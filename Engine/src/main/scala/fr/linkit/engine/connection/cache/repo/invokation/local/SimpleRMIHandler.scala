@@ -18,10 +18,13 @@ import fr.linkit.api.local.system.AppLogger
 
 object SimpleRMIHandler extends RMIHandler {
 
-    override def handleRMI[R](wrapper: PuppetWrapper[_])(id: Int, defaultReturnValue: R)(args: Array[Array[Any]])(superCall: => R): R = {
+    override def handleRMI[R](wrapper: PuppetWrapper[_])
+                             (id: Int, defaultReturnValue: R)
+                             (args: Array[Any])
+                             (superCall: => R): R = {
         val methodBehavior = wrapper.getBehavior.getMethodBehavior(id).get
         val name           = methodBehavior.desc.javaMethod.getName
-        val argsString     = args.map(_.mkString("(", ", ", ")")).mkString("")
+        val argsString     = args.mkString("(", ", ", ")")
         val puppeteer      = wrapper.getPuppeteer
         AppLogger.debug(s"$name: Performing rmi call for $name$argsString (id: $id)")
         AppLogger.debug(s"MethodBehavior = $methodBehavior")

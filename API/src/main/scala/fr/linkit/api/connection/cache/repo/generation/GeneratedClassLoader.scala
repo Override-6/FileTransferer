@@ -39,8 +39,4 @@ class GeneratedClassLoader(val classRootFolder: Path, parent: ClassLoader, mates
         }
     }
 
-    def defineClass(name: String, bytes: Array[Byte]): Class[_] = {
-        super.defineClass(name, bytes, 0, bytes.length)
-    }
-
 }

@@ -15,11 +15,10 @@ package fr.linkit.engine.connection.cache.repo.description
 import fr.linkit.api.connection.cache.repo.description._
 import fr.linkit.api.local.generation.PuppetClassDescription
 
-import scala.reflect.runtime.universe._
-
 class SimpleWrapperBehavior[A] private(override val classDesc: PuppetClassDescription[A],
-                                       override val treeView: TreeViewBehavior,
-                                       factory: MemberBehaviorFactory) extends WrapperBehavior[A] {
+                                       override val treeView: TreeViewBehavior) extends WrapperBehavior[A] {
+
+    private val factory = treeView.factory
 
     private val methods = {
         classDesc.listMethods()
@@ -51,23 +50,10 @@ class SimpleWrapperBehavior[A] private(override val classDesc: PuppetClassDescri
 
 object SimpleWrapperBehavior {
 
-    def apply[A](classDesc: PuppetClassDescription[A], treeView: TreeViewBehavior, factory: MemberBehaviorFactory): SimpleWrapperBehavior[A] = {
-        val bhv = new SimpleWrapperBehavior(classDesc, treeView, factory)
+    def apply[A](classDesc: PuppetClassDescription[A], treeView: TreeViewBehavior): SimpleWrapperBehavior[A] = {
+        val bhv = new SimpleWrapperBehavior(classDesc, treeView)
         treeView.put(classDesc.clazz, bhv)
         bhv
-    }
-
-    def toSynchronisedParamsIndexes(literal: String, method: Symbol): Seq[Boolean] = {
-        val synchronizedParamNumbers = literal
-                .split(",")
-                .filterNot(s => s == "this" || s.isBlank)
-                .map(s => s.trim
-                        .dropRight(s.lastIndexWhere(!_.isDigit))
-                        .toInt)
-                .distinct
-        for (n <- 1 to method.asMethod.paramLists.flatten.size) yield {
-            synchronizedParamNumbers.contains(n)
-        }
     }
 
 }

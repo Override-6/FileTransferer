@@ -14,11 +14,13 @@ package fr.linkit.api.connection.cache.repo
 
 import fr.linkit.api.connection.cache.repo.description.{PuppeteerInfo, WrapperBehavior}
 
+import java.util.concurrent.ThreadLocalRandom
+
 trait Puppeteer[S] {
-    
+
     val ownerID: String
 
-    val repo: ObjectSynchronizer
+    val repo: EngineObjectCenter[_]
 
     val puppeteerDescription: PuppeteerInfo
 
@@ -28,10 +30,11 @@ trait Puppeteer[S] {
 
     def getPuppetWrapper: S with PuppetWrapper[S]
 
-    def sendInvokeAndWaitResult[R](methodId: Int, args: Array[Array[Any]]): R
+    def sendInvokeAndWaitResult[R](methodId: Int, args: Array[Any]): R
 
     def init(wrapper: S with PuppetWrapper[S]): Unit
 
-    def sendInvoke(methodId: Int, args: Array[Array[Any]]): Unit
+    def sendInvoke(methodId: Int, args: Array[Any]): Unit
 
+    def synchronizedObj(obj: Any, id: Int = ThreadLocalRandom.current().nextInt()): Any
 }

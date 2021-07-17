@@ -13,7 +13,7 @@
 package fr.linkit.engine.connection.cache.repo.description
 
 import fr.linkit.api.connection.cache.repo.description.annotation.InvocationKind
-import fr.linkit.api.connection.cache.repo.description.{MemberBehaviorFactory, MethodBehavior, WrapperBehavior}
+import fr.linkit.api.connection.cache.repo.description.{MemberBehaviorFactory, MethodBehavior, TreeViewBehavior, WrapperBehavior}
 import fr.linkit.engine.connection.cache.repo.description.WrapperBehaviorBuilder.MethodControl
 
 import java.util
@@ -22,11 +22,15 @@ import scala.reflect.ClassTag
 class WrapperBehaviorBuilder[T] private(desc: WrapperBehavior[T]) {
 
     def this(clazz: Class[T], memberBehaviorFactory: MemberBehaviorFactory) {
-        this(SimpleWrapperBehavior(SimplePuppetClassDescription(clazz), new TreeViewDefaultBehaviors(memberBehaviorFactory), memberBehaviorFactory))
+        this(SimpleWrapperBehavior(SimplePuppetClassDescription(clazz), new TreeViewDefaultBehavior(memberBehaviorFactory)))
     }
 
     def this(memberBehaviorFactory: MemberBehaviorFactory)(implicit classTag: ClassTag[T]) = {
         this(classTag.runtimeClass.asInstanceOf[Class[T]], memberBehaviorFactory)
+    }
+
+    def this(treeView: TreeViewBehavior)(implicit classTag: ClassTag[T]) {
+        this(SimpleWrapperBehavior(SimplePuppetClassDescription(classTag.runtimeClass.asInstanceOf[Class[T]]), treeView))
     }
 
     final def annotate(name: String, params: Class[_]*): MethodModification = {
@@ -52,8 +56,7 @@ class WrapperBehaviorBuilder[T] private(desc: WrapperBehavior[T]) {
 
         def by(control: MethodControl): Unit = descs.foreach { bhv =>
             bhv.invocationKind = control.value
-            bhv.synchronizedParams = SimpleWrapperBehavior.toSynchronisedParamsIndexes(control.mutates, bhv.desc.symbol)
-            bhv.isPure = control.pure
+            bhv.synchronizedParams = if (control.synchronizedParams != null) control.synchronizedParams else bhv.synchronizedParams
             bhv.syncReturnValue = control.synchronizeReturnValue
             bhv.isHidden = control.hide
         }
@@ -69,6 +72,6 @@ class WrapperBehaviorBuilder[T] private(desc: WrapperBehavior[T]) {
 object WrapperBehaviorBuilder {
 
 
-    case class MethodControl(value: InvocationKind, pure: Boolean = false, mutates: String = "", synchronizeReturnValue: Boolean = false, hide: Boolean = false)
+    case class MethodControl(value: InvocationKind, synchronizeReturnValue: Boolean = false, hide: Boolean = false, synchronizedParams: Seq[Boolean] = null)
 
 }

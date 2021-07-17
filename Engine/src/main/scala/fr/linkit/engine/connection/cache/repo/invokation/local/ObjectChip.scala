@@ -31,7 +31,7 @@ case class ObjectChip[S] private(owner: String,
         ScalaUtils.pasteAllFields(wrapper, obj)
     }
 
-    override def callMethod(methodID: Int, params: Array[Array[Any]]): Any = {
+    override def callMethod(methodID: Int, params: Array[Any]): Any = {
         val methodDesc = behavior.getMethodBehavior(methodID)
         if (methodDesc.forall(_.isHidden)) {
             throw new PuppetException(s"Attempted to invoke ${methodDesc.fold("unknown")(_ => "hidden")} method '${
@@ -42,7 +42,7 @@ case class ObjectChip[S] private(owner: String,
             methodDesc.get
                     .desc
                     .javaMethod
-                    .invoke(wrapper, params.flatten: _*)
+                    .invoke(wrapper, params: _*)
         }
     }
 

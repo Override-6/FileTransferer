@@ -16,6 +16,7 @@ import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
 trait TreeViewBehavior {
+    val factory: MemberBehaviorFactory
     def get[B: TypeTag : ClassTag]: WrapperBehavior[B]
 
     def getFromClass[B](clazz: Class[B]): WrapperBehavior[B]

@@ -21,7 +21,7 @@ trait ExternalConnection extends ConnectionContext {
 
     def getState: ExternalConnectionState
 
-    def translator: PacketTranslator
+    val translator: PacketTranslator
 
     def isConnected: Boolean
 

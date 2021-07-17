@@ -18,6 +18,7 @@ import fr.linkit.api.connection.packet.traffic.PacketTraffic.SystemChannelID
 import fr.linkit.api.local.system.event.EventNotifier
 import fr.linkit.client.ClientApplication
 import fr.linkit.client.local.config.ClientConnectionConfiguration
+import fr.linkit.engine.connection.packet.serialization.DefaultPacketTranslator
 import fr.linkit.engine.connection.packet.traffic.{ChannelScopes, DynamicSocket, SocketPacketTraffic}
 import fr.linkit.engine.local.concurrency.PacketReaderThread
 import fr.linkit.engine.local.system.SystemPacketChannel
@@ -31,7 +32,7 @@ case class ClientConnectionSession(socket: DynamicSocket,
     val configuration    : ClientConnectionConfiguration = info.configuration
     val readThread       : PacketReaderThread            = info.readThread
     val supportIdentifier: String                        = configuration.identifier
-    val translator       : PacketTranslator              = configuration.translator
+    val translator       : PacketTranslator              = new DefaultPacketTranslator
     val traffic          : PacketTraffic                 = new SocketPacketTraffic(socket, translator, appContext, supportIdentifier, serverIdentifier)
     val eventNotifier    : EventNotifier                 = new DefaultEventNotifier
     val systemChannel    : SystemPacketChannel           = traffic.getInjectable(SystemChannelID, ChannelScopes.discardCurrent, SystemPacketChannel)

@@ -18,24 +18,25 @@ import fr.linkit.engine.connection.cache.repo.{CacheRepoContent, NoSuchPuppetExc
 
 import scala.collection.mutable
 
-class DefaultPuppetCenter[A <: Serializable] extends PuppetCenter[A] {
+class DefaultPuppetCenter[A] extends PuppetCenter {
 
-    private val puppets = new mutable.HashMap[Int, SyncNode[_ <: A]]
+    private val puppets = new mutable.HashMap[Int, SyncNode[A]]
 
-    override def getNode[B <: A](path: Array[Int]): Option[SyncNode[B]] = puppets.get(path(0)) match {
+    override def getNode[B](path: Array[Int]): Option[SyncNode[B]] = puppets.get(path(0)) match {
         case None        => None
-        case Some(value) => value
-                .getGrandChild(path.drop(1))
+        case Some(value) if path.length > 1 => value
+                .getGrandChild(path.dropRight(1))
                 .map(_.asInstanceOf[SyncNode[B]])
+        case s => s.asInstanceOf[Option[SyncNode[B]]]
     }
 
-    override def addPuppet[B <: A](path: Array[Int], provider: SyncNode[_] => SyncNode[B]): Unit = {
+    override def addNode[B](path: Array[Int], provider: (Int, SyncNode[_]) => SyncNode[B]): Unit = {
         if (path.length == 1) {
-            puppets.put(path.head, provider(null))
+            puppets.put(path.head, provider(path.head, null).asInstanceOf[SyncNode[A]])
             return
         }
-        getNode[B](path).fold(throw new NoSuchPuppetException("Attempted to attach a puppet node to a parent that does not exists !")) {
-            parent => parent.addChild(path.last, provider)
+        getNode[B](path.dropRight(1)).fold(throw new NoSuchPuppetException("Attempted to attach a puppet node to a parent that does not exists !")) {
+            parent => parent.addChild(path.last, provider(path.last, _))
         }
     }
 

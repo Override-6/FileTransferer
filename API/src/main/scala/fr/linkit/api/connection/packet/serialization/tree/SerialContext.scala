@@ -18,11 +18,5 @@ import scala.reflect.ClassTag
 
 trait SerialContext extends ClassProfileHandler {
 
-    def attachFactory(nodeFactory: NodeFactory[_]): Unit
-
-    def detachFactory(nodeFactory: NodeFactory[_]): Unit
-
-    def attachProcedure[C: ClassTag](procedure: Procedure[C]): Unit
-
     def getFinder: NodeFinder
 }

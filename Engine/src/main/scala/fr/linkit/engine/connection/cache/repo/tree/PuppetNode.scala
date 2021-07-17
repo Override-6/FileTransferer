@@ -12,11 +12,10 @@
 
 package fr.linkit.engine.connection.cache.repo.tree
 
-import fr.linkit.api.connection.cache.repo.description.{TreeViewBehavior, WrapperBehavior}
+import fr.linkit.api.connection.cache.repo.description.TreeViewBehavior
 import fr.linkit.api.connection.cache.repo.tree.SyncNode
-import fr.linkit.api.connection.cache.repo.{Chip, PuppetWrapper, Puppeteer}
+import fr.linkit.api.connection.cache.repo.{Chip, Puppeteer}
 import fr.linkit.engine.connection.cache.repo.NoSuchPuppetException
-import fr.linkit.engine.connection.cache.repo.invokation.local.ObjectChip
 import fr.linkit.engine.connection.cache.repo.invokation.remote.InvocationPacket
 import fr.linkit.engine.connection.packet.UnexpectedPacketException
 import fr.linkit.engine.connection.packet.fundamental.RefPacket
@@ -58,10 +57,10 @@ class PuppetNode[A](override val puppeteer: Puppeteer[A], //Remote invocation
         if (!(packet.path sameElements treeViewPath)) {
             val packetPath = packet.path
             if (!packetPath.startsWith(treeViewPath))
-                throw UnexpectedPacketException("Received invocation packet that does not target this node or this node's children.")
+                throw UnexpectedPacketException(s"Received invocation packet that does not target this node or this node's children ${packetPath.mkString("$", " -> ", "")}.")
 
             getGrandChild(packetPath.drop(treeViewPath.length))
-                    .fold(throw new NoSuchPuppetException(s"Received packet that aims for an unknown puppet children node (${packetPath.mkString("$", " -> ", "")}")) {
+                    .fold(throw new NoSuchPuppetException(s"Received packet that aims for an unknown puppet children node (${packetPath.mkString("$", " -> ", "")})")) {
                         case node: MemberSyncNode[_] => node.handlePacket(packet, response)
                         case _                       =>
                     }
@@ -69,11 +68,19 @@ class PuppetNode[A](override val puppeteer: Puppeteer[A], //Remote invocation
         makeMemberInvocation(packet, response)
     }
 
+    private def synchronizedArgs(synchronizedParams: Array[Int], args: Array[Any]): Array[Any] = {
+        val v = synchronizedParams
+                .zip(args)
+                .map(pair => if (pair._1 != -1) puppeteer.synchronizedObj(pair._2, pair._1) else pair._2)
+        v
+    }
+
     private def makeMemberInvocation(packet: InvocationPacket, response: ResponseSubmitter): Unit = {
         val methodID = packet.methodID
-        var result   = chip.callMethod(methodID, packet.params)
+
+        var result = chip.callMethod(methodID, packet.params)
         if (isOwner) {
-            val methodBehavior = puppeteer.wrapperBehavior.getMethodBehavior(methodID)
+            val methodBehavior    = puppeteer.wrapperBehavior.getMethodBehavior(methodID)
             val canSyncReturnType = methodBehavior.get.syncReturnValue
             if (result != null && canSyncReturnType) {
                 implicit val resultCT: ClassTag[_] = ClassTag(result.getClass)
@@ -81,19 +88,7 @@ class PuppetNode[A](override val puppeteer: Puppeteer[A], //Remote invocation
                 val synchronizer   = puppeteer.repo
                 val resultNodePath = treeViewPath ++ Array(id)
 
-                result = synchronizer.genSynchronizedObject(resultNodePath, result, ownerID, descriptions) {
-                    (wrapper, path) =>
-                        val id          = path.last
-                        val description = descriptions.getFromClass(wrapper.getClass)
-                        getGrandChild(path.drop(treeViewPath.length).dropRight(1))
-                                .fold(throw new NoSuchPuppetException(s"Puppet Node not found in path ${path.mkString("$", " -> ", "")}")) {
-                                    parent =>
-                                        val chip      = ObjectChip[Any](ownerID, description.asInstanceOf[WrapperBehavior[Any]], wrapper.asInstanceOf[PuppetWrapper[Any]])
-                                        val puppeteer = wrapper.getPuppeteer.asInstanceOf[Puppeteer[Any]]
-                                        parent.addChild(id, new PuppetNode(puppeteer, chip, descriptions, isOwner, id, _))
-                                }
-
-                }
+                synchronizer.genSynchronizedObject(resultNodePath, result, ownerID, descriptions)
             }
             response
                     .addPacket(RefPacket[Any](result))

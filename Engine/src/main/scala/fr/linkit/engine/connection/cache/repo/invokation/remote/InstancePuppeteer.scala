@@ -41,7 +41,7 @@ class InstancePuppeteer[S](channel: RequestPacketChannel,
 
     override def getPuppetWrapper: S with PuppetWrapper[S] = puppetWrapper
 
-    override def sendInvokeAndWaitResult[R](methodId: Int, args: Array[Array[Any]]): R = {
+    override def sendInvokeAndWaitResult[R](methodId: Int, args: Array[Any]): R = {
         val bhv = wrapperBehavior.getMethodBehavior(methodId).getOrElse {
             throw new NoSuchMethodException(s"Remote method not found for id '$methodId'")
         }
@@ -49,7 +49,7 @@ class InstancePuppeteer[S](channel: RequestPacketChannel,
         AppLogger.debug(s"Remotely invoking method ${bhv.desc.symbol.name}")
         val treeViewPath = puppeteerDescription.treeViewPath
         val result       = channel.makeRequest(chooseScope(bhv.invocationKind))
-                .addPacket(InvocationPacket(treeViewPath, methodId, synchronizedArgs(bhv, args)))
+                .addPacket(InvocationPacket(treeViewPath, methodId, args))
                 .submit()
                 .nextResponse
                 .nextPacket[RefPacket[R]].value
@@ -60,18 +60,15 @@ class InstancePuppeteer[S](channel: RequestPacketChannel,
         }
     }
 
-    override def sendInvoke(methodId: Int, args: Array[Array[Any]]): Unit = {
+    override def sendInvoke(methodId: Int, args: Array[Any]): Unit = {
         val bhv = wrapperBehavior.getMethodBehavior(methodId).getOrElse {
             throw new NoSuchMethodException(s"Remote method not found for id '$methodId'")
         }
         AppLogger.debug(s"Remotely invoking method ${bhv.desc.symbol.name}(${args.mkString(",")})")
-
-        if (!bhv.isHidden) {
-            channel.makeRequest(chooseScope(bhv.invocationKind))
-                    .addPacket(InvocationPacket(puppeteerDescription.treeViewPath, methodId, args))
-                    .submit()
-                    .detach()
-        }
+        channel.makeRequest(chooseScope(bhv.invocationKind))
+                .addPacket(InvocationPacket(puppeteerDescription.treeViewPath, methodId, args))
+                .submit()
+                .detach()
     }
 
     override def init(wrapper: S with PuppetWrapper[S]): Unit = {
@@ -81,6 +78,14 @@ class InstancePuppeteer[S](channel: RequestPacketChannel,
         this.puppetWrapper = wrapper
     }
 
+
+    override def synchronizedObj(obj: Any, id: Int = ThreadLocalRandom.current().nextInt()): Any = {
+        val currentPath = puppeteerDescription.treeViewPath
+        val objPath     = currentPath ++ Array(id)
+        val defaults    = repo.defaultTreeViewBehavior
+        repo.genSynchronizedObject(objPath, obj, ownerID, defaults)
+    }
+
     private def chooseScope(kind: InvocationKind): ChannelScope = {
         import InvocationKind._
         kind match {
@@ -88,38 +93,6 @@ class InstancePuppeteer[S](channel: RequestPacketChannel,
             case ONLY_REMOTES | LOCAL_AND_REMOTES => bcScope
             case ONLY_LOCAL                       =>
                 throw new UnsupportedOperationException(s"Unable to perform a remote invocation with Invocation kind of type $ONLY_LOCAL")
-        }
-    }
-
-    private def synchronizedArgs(desc: MethodBehavior, args: Array[Array[Any]]): Array[Array[Any]] = {
-        val v = desc.synchronizedParams
-                .zip(args)
-                .map(pair => if (pair._1) pair._2.map(synchronizedObj) else pair._2)
-                .toArray
-        v
-    }
-
-    private def synchronizedObj(obj: Any): Any = {
-        val id          = ThreadLocalRandom.current().nextInt()
-        val currentPath = puppeteerDescription.treeViewPath
-        val objPath     = currentPath ++ Array(id)
-        val defaults    = repo.defaultTreeViewBehavior
-        val isIntended  = channel.traffic.supportIdentifier == ownerID
-        repo.genSynchronizedObject(objPath, obj, ownerID, defaults) {
-            (wrapper, childPath) =>
-                val id          = childPath.last
-                val description = repo.defaultTreeViewBehavior.getFromClass(wrapper.getClass)
-                repo.center
-                        .getNode(currentPath).get
-                        .getGrandChild(childPath
-                                .drop(currentPath.length)
-                                .dropRight(1))
-                        .fold(throw new NoSuchPuppetException(s"Puppet Node not found in path ${childPath.mkString("$", " -> ", "")}")) {
-                            parent =>
-                                val chip      = ObjectChip[Any](ownerID, description.asInstanceOf[WrapperBehavior[Any]], wrapper.asInstanceOf[PuppetWrapper[Any]])
-                                val puppeteer = wrapper.getPuppeteer.asInstanceOf[Puppeteer[Any]]
-                                parent.addChild(id, new PuppetNode(puppeteer, chip, defaults, isIntended, id, _))
-                        }
         }
     }
 

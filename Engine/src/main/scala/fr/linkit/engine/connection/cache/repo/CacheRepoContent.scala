@@ -15,9 +15,9 @@ package fr.linkit.engine.connection.cache.repo
 import fr.linkit.engine.connection.cache.CacheArrayContent
 import fr.linkit.engine.connection.cache.repo.DefaultEngineObjectCenter.PuppetProfile
 
-class CacheRepoContent[A <: Serializable](content: Array[PuppetProfile[A]]) extends CacheArrayContent[PuppetProfile[A]](content)
+class CacheRepoContent[A](content: Array[PuppetProfile[A]]) extends CacheArrayContent[PuppetProfile[A]](content)
 
 object CacheRepoContent {
 
-    def apply[A <: Serializable](content: Array[PuppetProfile[A]]): CacheRepoContent[A] = new CacheRepoContent(content)
+    def apply[A](content: Array[PuppetProfile[A]]): CacheRepoContent[A] = new CacheRepoContent(content)
 }

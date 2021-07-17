@@ -14,7 +14,7 @@ package fr.linkit.server.local.config
 
 import fr.linkit.api.connection.packet.serialization.PacketTranslator
 import fr.linkit.api.local.system.security.BytesHasher
-import fr.linkit.engine.connection.packet.serialization.SimplePacketTranslator
+import fr.linkit.engine.connection.packet.serialization.DefaultPacketTranslator
 import fr.linkit.server.local.config.ServerConnectionConfigBuilder.count
 
 abstract class ServerConnectionConfigBuilder {
@@ -24,7 +24,7 @@ abstract class ServerConnectionConfigBuilder {
     var nWorkerThreadFunction: Int => Int  = _ * 2 + 1 //2 threads per external connection allocated + 1 for the server connection
     var configName           : String      = s"config#$count"
     var hasher               : BytesHasher = BytesHasher.inactive
-    lazy val translatorFactory: PacketTranslator = new SimplePacketTranslator
+    lazy val translatorFactory: PacketTranslator = new DefaultPacketTranslator
     var identifierAmbiguityStrategy: AmbiguityStrategy = AmbiguityStrategy.REJECT_NEW
     val identifier: String
     val port      : Int
@@ -39,7 +39,6 @@ abstract class ServerConnectionConfigBuilder {
             override val identifier                 : String            = builder.identifier
             override val port                       : Int               = builder.port
             override val hasher                     : BytesHasher       = builder.hasher
-            override val translator                 : PacketTranslator  = builder.translatorFactory
             override val identifierAmbiguityStrategy: AmbiguityStrategy = builder.identifierAmbiguityStrategy
         }
     }

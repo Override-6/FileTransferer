@@ -30,7 +30,7 @@ trait ConnectionContext extends PacketInjectableContainer with Procrastinator {
 
     def getApp: ApplicationContext
 
-    def translator: PacketTranslator
+    val translator: PacketTranslator
 
     def network: Network
 

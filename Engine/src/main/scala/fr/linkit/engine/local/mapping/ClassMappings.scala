@@ -12,6 +12,9 @@
 
 package fr.linkit.engine.local.mapping
 
+import fr.linkit.engine.local.utils.NumberSerializer
+import org.nustaq.serialization.FSTConfiguration
+
 import java.security.CodeSource
 import scala.collection.mutable
 
@@ -22,9 +25,6 @@ object ClassMappings {
     private val sources    = mutable.HashSet.empty[CodeSource]
 
     def putClass(className: String, loader: ClassLoader): Unit = {
-        /*if (classes.contains(className.hashCode)) {
-            throw new IllegalArgumentException(s"This hash code is already registered ! (found $className, registered ${classes(className.hashCode)}")
-        }*/
         //println(s"Class put ! ($className) of hash code ${className.hashCode}")
         classes.put(className.hashCode, (className, loader))
     }

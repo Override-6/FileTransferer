@@ -35,4 +35,17 @@ object CloneHelper {
         instance
     }
 
+    def prepareClass(clazz: Class[_]): Unit = {
+        clazz.getFields
+        clazz.getDeclaredFields
+        clazz.getMethods
+        clazz.getDeclaredMethods
+        clazz.getSimpleName
+        clazz.getName
+        clazz.getAnnotations
+        clazz.getDeclaredAnnotations
+        clazz.getConstructors
+        clazz.getDeclaredConstructors
+    }
+
 }

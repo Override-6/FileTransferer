@@ -24,6 +24,7 @@ import fr.linkit.api.local.concurrency.{AsyncTask, WorkerPools, workerExecution}
 import fr.linkit.api.local.resource.external.ResourceFolder
 import fr.linkit.api.local.system.AppLogger
 import fr.linkit.api.local.system.event.EventNotifier
+import fr.linkit.engine.connection.packet.serialization.DefaultPacketTranslator
 import fr.linkit.engine.connection.packet.traffic.DynamicSocket
 import fr.linkit.engine.local.concurrency.pool.BusyWorkerPool
 import fr.linkit.engine.local.system.Rules
@@ -44,7 +45,7 @@ class ServerConnection(applicationContext: ServerApplication,
                        val configuration: ServerConnectionConfiguration) extends CentralConnection {
 
     override val supportIdentifier : String                     = configuration.identifier
-    override val translator        : PacketTranslator           = configuration.translator
+    override val translator        : PacketTranslator           = new DefaultPacketTranslator
     override val port              : Int                        = configuration.port
     private  val workerPool        : BusyWorkerPool             = new BusyWorkerPool(configuration.nWorkerThreadFunction(0), supportIdentifier)
     private  val serverSocket      : ServerSocket               = new ServerSocket(configuration.port)

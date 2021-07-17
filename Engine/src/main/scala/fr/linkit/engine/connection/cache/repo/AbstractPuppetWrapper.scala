@@ -12,7 +12,7 @@
 
 package fr.linkit.engine.connection.cache.repo
 
-import fr.linkit.api.connection.cache.repo.description.{PuppeteerInfo, WrapperBehavior}
+import fr.linkit.api.connection.cache.repo.description.{MethodBehavior, PuppeteerInfo, WrapperBehavior}
 import fr.linkit.api.connection.cache.repo.{InvocationChoreographer, PuppetWrapper, Puppeteer}
 import fr.linkit.engine.connection.cache.repo.generation.CloneHelper
 
@@ -51,21 +51,32 @@ trait AbstractPuppetWrapper[A] extends PuppetWrapper[A] {
 
     override def getBehavior: WrapperBehavior[A] = behavior
 
-    override def getPuppeteerDescription: PuppeteerInfo = puppeteerDescription
+    override def getPuppeteerInfo: PuppeteerInfo = puppeteerDescription
+
+    private def synchronizedParams(bhv: MethodBehavior, objects: Array[Any]): Array[Any] = {
+        var i = -1
+        objects.map(obj => {
+            i += 1
+            if (!bhv.synchronizedParams(i) || obj.isInstanceOf[PuppetWrapper[_]])
+                obj
+            else puppeteer.synchronizedObj(obj)
+        })
+    }
 
     protected def handleCall[R](id: Int, defaultReturnValue: R)
-                               (args: Array[Array[Any]])(superCall: => Any = null): R = {
+                               (args: Array[Any])(superCall: Array[Any] => Any): R = {
         val methodBehavior = behavior.getMethodBehavior(id).get
         val name           = methodBehavior.desc.javaMethod.getName
-        val argsString     = args.map(_.mkString("(", ", ", ")")).mkString("")
+        val argsString     = args.mkString("(", ", ", ")")
+        val synchronizedArgs = synchronizedParams(methodBehavior, args)
         /*if (name == "toString")
             Thread.dumpStack()*/
         if (choreographer.isMethodExecutionForcedToLocal) {
             println(s"forced local method call $name$argsString.")
-            return superCall.asInstanceOf[R]
+            return superCall(synchronizedArgs).asInstanceOf[R]
         }
         methodBehavior.handler
-                .handleRMI[R](this)(id, defaultReturnValue)(args)(performSuperCall[R](superCall))
+                .handleRMI[R](this)(id, defaultReturnValue)(synchronizedArgs)(performSuperCall[R](superCall(synchronizedArgs)))
     }
 
     private def asWrapper: A with PuppetWrapper[A] = this.asInstanceOf[A with PuppetWrapper[A]]

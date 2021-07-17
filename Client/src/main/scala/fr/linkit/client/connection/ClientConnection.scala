@@ -30,6 +30,7 @@ import fr.linkit.client.local.config.ClientConnectionConfiguration
 import fr.linkit.client.connection.network.ClientSideNetwork
 import fr.linkit.engine.connection.network.SimpleRemoteConsole
 import fr.linkit.engine.connection.packet.fundamental.ValPacket.BooleanPacket
+import fr.linkit.engine.connection.packet.serialization.DefaultPacketTranslator
 import fr.linkit.engine.connection.packet.traffic.{DefaultPacketReader, DynamicSocket}
 import fr.linkit.engine.local.concurrency.PacketReaderThread
 import fr.linkit.engine.local.system.{Rules, SystemPacket}
@@ -46,7 +47,7 @@ class ClientConnection private(session: ClientConnectionSession) extends Externa
     initPacketReader()
 
     override val supportIdentifier: String            = configuration.identifier
-    override val translator       : PacketTranslator  = configuration.translator
+    override val translator       : PacketTranslator  = new DefaultPacketTranslator()
     override val port             : Int               = configuration.remoteAddress.getPort
     override val eventNotifier    : EventNotifier     = session.eventNotifier
     override val traffic          : PacketTraffic     = session.traffic
@@ -171,7 +172,7 @@ object ClientConnection {
              configuration: ClientConnectionConfiguration): ClientConnection = {
 
         //Initializing values that will be used for packet transactions during the initialization.
-        val translator   = configuration.translator
+        val translator   = new DefaultPacketTranslator()
         val packetReader = new DefaultPacketReader(socket, BytesHasher.inactive, context, translator)
 
         //WelcomePacket informational fields

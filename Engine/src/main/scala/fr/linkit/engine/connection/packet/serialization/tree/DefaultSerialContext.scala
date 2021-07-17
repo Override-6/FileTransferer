@@ -15,8 +15,8 @@ package fr.linkit.engine.connection.packet.serialization.tree
 import fr.linkit.api.connection.network.Network
 import fr.linkit.api.connection.packet.Packet
 import fr.linkit.api.connection.packet.serialization.tree._
-import fr.linkit.api.connection.packet.serialization.tree.procedure.Procedure
 import fr.linkit.engine.connection.packet.serialization.tree.DefaultSerialContext.{PacketClassNameRequest, SerialContextChannelID}
+import fr.linkit.engine.connection.packet.serialization.tree.nodes._
 import fr.linkit.engine.connection.packet.traffic.ChannelScopes
 import fr.linkit.engine.connection.packet.traffic.channel.request.RequestPacketChannel
 import fr.linkit.engine.local.mapping.ClassMappings
@@ -28,27 +28,10 @@ import scala.reflect.{ClassTag, classTag}
 
 class DefaultSerialContext extends SerialContext {
 
-    private[tree] val userFactories        = ListBuffer.empty[NodeFactory[_]]
     private[tree] val defaultFactories     = ListBuffer.empty[NodeFactory[_]]
     private       val profiles             = new mutable.HashMap[Class[_], ClassProfile[_]]()
     private       val finder               = new DefaultNodeFinder(this)
     @Nullable private var network: Network = _
-
-    private lazy val channel = network
-            .connection
-            .getInjectable(SerialContextChannelID, ChannelScopes.discardCurrent, RequestPacketChannel)
-
-    override def attachProcedure[C: ClassTag](procedure: Procedure[C]): Unit = {
-        getProfile[C].addProcedure(procedure)
-    }
-
-    override def detachFactory(nodeFactory: NodeFactory[_]): Unit = {
-        userFactories -= nodeFactory
-    }
-
-    override def attachFactory(factory: NodeFactory[_]): Unit = {
-        userFactories += factory
-    }
 
     override def getProfile[T: ClassTag]: ClassProfile[T] = {
         getClassProfile(classTag[T]
@@ -72,15 +55,30 @@ class DefaultSerialContext extends SerialContext {
         if (network == null)
             throw new NullPointerException
         this.network = network
-        channel.addRequestListener(bundle => {
+        defaultFactories += new PuppetWrapperNode(network)
+        /*channel.addRequestListener(bundle => {
             val packet    = bundle.packet.nextPacket[PacketClassNameRequest]
             val className = ClassMappings.findClass(packet.hash).map(_.getName).orNull
             packet.name = className
             bundle.responseSubmitter
                     .addPacket(packet)
                     .submit()
-        })
+        })*/
     }
+
+    //The order of registration have an effect.
+    defaultFactories += NullNode
+    defaultFactories += ArrayNode
+    defaultFactories += StringNode
+    defaultFactories += PrimitiveNode.apply
+    defaultFactories += EnumNode.apply
+    defaultFactories += SeqNode.ofMutable
+    defaultFactories += SeqNode.ofImmutable
+    defaultFactories += MapNode.ofMutable
+    defaultFactories += MapNode.ofImmutable
+    defaultFactories += DateNode
+    defaultFactories += ObjectNode.apply
+
 
 }
 

@@ -12,11 +12,12 @@
 
 package fr.linkit.server.connection
 
-import fr.linkit.api.connection.packet.serialization.{PacketDeserializationResult, PacketTransferResult}
+import fr.linkit.api.connection.packet.serialization.PacketDeserializationResult
 import fr.linkit.api.connection.packet.traffic.PacketReader
 import fr.linkit.api.connection.packet.{BroadcastPacketCoordinates, DedicatedPacketCoordinates}
 import fr.linkit.api.local.concurrency.workerExecution
 import fr.linkit.api.local.system.AppLogger
+import fr.linkit.engine.connection.packet.serialization.DefaultPacketTranslator
 import fr.linkit.engine.connection.packet.traffic.{DefaultPacketReader, DynamicSocket, SocketClosedException}
 
 import java.net.SocketException
@@ -28,7 +29,7 @@ class SelectivePacketReader(socket: DynamicSocket,
                             boundIdentifier: String) extends PacketReader {
 
     private val configuration = server.configuration
-    private val simpleReader  = new DefaultPacketReader(socket, configuration.hasher, server, configuration.translator)
+    private val simpleReader  = new DefaultPacketReader(socket, configuration.hasher, server, new DefaultPacketTranslator())
 
     override def nextPacket(@workerExecution callback: (PacketDeserializationResult) => Unit): Unit = {
         try {

@@ -41,9 +41,18 @@ object ScalaWrapperMethodBlueprint {
         bindValue("MethodID" ~> (_.methodId.toString))
         bindValue("ParamsIn" ~> (getParameters(_)(_.mkString("(", ", ", ")"), _.mkString(""), true, false)))
         bindValue("ParamsOut" ~> (getParameters(_)(_.mkString("(", ", ", ")"), _.mkString(""), false, true)))
-        bindValue("ParamsOutArray" ~> (getParameters(_)(_.mkString(", "), _.mkString("Array[Any](", ", ", ")"), false, false)))
+        bindValue("ParamsOutFlatten" ~> (getParamsOutFlatten(_, false)))
+        bindValue("ParamsOutFlattenLambda" ~> (getParamsOutFlatten(_, true)))
         bindValue("Override" ~> chooseOverride)
 
+    }
+
+    private def getParamsOutFlatten(desc: MethodDescription, isForLambda: Boolean): String = {
+        val result = (1 to desc.javaMethod.getParameterCount)
+                .map(i => s"arg$i").mkString(", ")
+        if (isForLambda)
+            if (result.isEmpty) result else ", " + result
+        else result
     }
 
     private def chooseOverride(desc: MethodDescription): String = {

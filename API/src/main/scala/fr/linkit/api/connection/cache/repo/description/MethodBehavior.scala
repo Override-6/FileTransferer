@@ -16,10 +16,9 @@ import fr.linkit.api.connection.cache.repo.description.annotation.{InvocationKin
 
 case class MethodBehavior(desc: MethodDescription,
                           invokeOnly: Option[InvokeOnly],
-                          var synchronizedParams: Seq[Boolean], //TODO make synchronization
+                          var synchronizedParams: Seq[Boolean],
                           var invocationKind: InvocationKind,
                           var syncReturnValue: Boolean,
-                          var isPure: Boolean, //FIXME Not used
                           var isHidden: Boolean,
                           handler: RMIHandler) {
 
@@ -36,4 +35,5 @@ case class MethodBehavior(desc: MethodDescription,
     }
 
     def isInvokeOnly: Boolean = invokeOnly.isDefined
+
 }

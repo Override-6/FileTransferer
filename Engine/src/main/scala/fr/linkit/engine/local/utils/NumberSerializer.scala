@@ -101,13 +101,15 @@ object NumberSerializer {
     def deserializeFlaggedNumber[@specialized(Byte, Short, Int, Long) T <: AnyVal](bytes: Array[Byte], start: Int): (T, Byte) = {
         var result: Long = 0
         val numberLength = bytes(start)
+        if (numberLength < 0)
+            throw new IllegalArgumentException("number length < 0")
         if (numberLength == 1)
             return (bytes(start + 1).asInstanceOf[T], 2)
 
         val limit = start + numberLength
 
         for (i <- (start + 1) to limit) {
-            val b = bytes(i)
+            val b     = bytes(i)
             val place = (limit - i) * 8
             result |= (0xff & b) << place
         }

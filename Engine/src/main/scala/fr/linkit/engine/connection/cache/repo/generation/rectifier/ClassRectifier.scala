@@ -12,7 +12,6 @@
 
 package fr.linkit.engine.connection.cache.repo.generation.rectifier
 
-import fr.linkit.agent.LinkitAgent
 import fr.linkit.api.connection.cache.repo.PuppetWrapper
 import fr.linkit.api.connection.cache.repo.description.MethodDescription
 import fr.linkit.api.connection.cache.repo.generation.GeneratedClassLoader
@@ -43,6 +42,7 @@ class ClassRectifier(desc: PuppetClassDescription[_], puppetClassName: String, c
 
         val methodDescs      = desc.listMethods()
         val superDescriptors = ListBuffer.empty[String]
+        val methodNames      = ListBuffer.empty[String]
 
         def fixMethod(desc: MethodDescription): Unit = {
             val javaMethod   = desc.javaMethod
@@ -51,14 +51,17 @@ class ClassRectifier(desc: PuppetClassDescription[_], puppetClassName: String, c
             val superfunInfo = new MethodInfo(ctClass.getClassFile.getConstPool, superfunName, generateSuperFunDescriptor(javaMethod))
             if (superDescriptors.contains(superfunName + superfunInfo.getDescriptor))
                 return
-            val anonfun  = getAnonFun(javaMethod)
+            val anonfun  = getAnonFun(javaMethod, methodNames.count(_ == javaMethod.getName))
             val superfun = CtMethod.make(superfunInfo, ctClass)
             superfun.setModifiers(SuperMethodModifiers)
 
             ctClass.addMethod(superfun)
             superfun.setBody(getSuperFunBody(javaMethod))
-            anonfun.setBody(getAnonFunBody(javaMethod, superfun))
+            val body = getAnonFunBody(javaMethod, superfun)
+            anonfun.setBody(body)
+
             superDescriptors += superfunName + superfunInfo.getDescriptor
+            methodNames += javaMethod.getName
         }
 
         for (desc <- methodDescs) {
@@ -66,26 +69,40 @@ class ClassRectifier(desc: PuppetClassDescription[_], puppetClassName: String, c
         }
     }
 
-    private def getAnonFun(javaMethod: Method): CtMethod = {
-        val argsStrings = javaMethod.getParameterTypes.map(cl => cl.getSimpleName)
-        val v           = ctClass
-                .getDeclaredMethods
-                .filter(_.getName.startsWith("$anonfun$" + javaMethod.getName))
-                .find(m => {
-                    val v = m.getParameterTypes.drop(1).map(cl => cl.getSimpleName)
-                    v sameElements argsStrings
-                })
-        v.get
+    private def getAnonFun(javaMethod: Method, shift: Int): CtMethod = {
+        ctClass.getDeclaredMethod("$anonfun$" + javaMethod.getName + "$" + (shift + 1))
     }
 
     private def getAnonFunBody(javaMethod: Method, superFun: CtMethod): String = {
-        val str = s"$$1.${superFun.getName}(${(1 to javaMethod.getParameterCount).map(i => s"$$${i + 1}").mkString(",")})"
+
+        val params = javaMethod.getParameterTypes
+        val str    = s"$$1.${superFun.getName}(${(0 until javaMethod.getParameterCount).map(i => {
+            val clazz = params(i)
+            s"(${clazz.getTypeName}) ${getWrapperFor(clazz, s"$$2[$i]", true)}"
+        }).mkString(",")})"
+
         if (javaMethod.getReturnType == Void.TYPE)
-            "{" + str + ";return null;}"
+            s"{$str; return null;}"
         else {
             s"{return ${getWrapperFor(superFun.getReturnType, str)};}"
         }
     }
+
+
+    /*private def getValueSynchronizationCode(javaMethod: Method): String = {
+        var n = 0
+
+        val parameters = javaMethod.getParameterTypes
+        val lastCount  = parameters.length + 2
+        parameters
+                .map(clazz => {
+                    n += 1
+                    val synchronization = s"$$1.synchronizedParam($$$lastCount, ${getWrapperFor(clazz, s"$$${n + 1}")}, $n)"
+                    val typeName        = clazz.getTypeName
+                    s"$typeName syncArg$n = ($typeName) ${getWrapperFor(clazz, synchronization, true)};"
+                })
+                .mkString("\n")
+    }*/
 
     private def getWrapperFor(returnType: CtClass, str: String): String = {
         if (returnType.isPrimitive) {
@@ -93,6 +110,20 @@ class ClassRectifier(desc: PuppetClassDescription[_], puppetClassName: String, c
             if (wrapperName == "Int")
                 wrapperName = "Integer"
             s"$wrapperName.valueOf($str)"
+        }
+        else str
+    }
+
+    private def getWrapperFor(returnType: Class[_], str: String, unwrap: Boolean = false): String = {
+        if (returnType.isPrimitive) {
+            var wrapperName = returnType.getName.head.toUpper + returnType.getName.drop(1)
+            if (wrapperName == "Int")
+                wrapperName = "Integer"
+            if (unwrap) {
+                val methodName = returnType.getName + "Value"
+                s"(($wrapperName) $str).$methodName()"
+            } else
+                s"$wrapperName.valueOf($str)"
         }
         else str
     }

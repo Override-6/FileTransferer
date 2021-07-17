@@ -10,14 +10,17 @@
  *  questions.
  */
 
-package fr.linkit.api.connection.cache.repo
+package fr.linkit.engine.test
 
-import fr.linkit.api.connection.cache.repo.description.TreeViewBehavior
+import fr.linkit.engine.connection.packet.serialization.FSTSerializer
+import org.junit.jupiter.api.Test
 
-trait ObjectSynchronizer {
+object PacketSerializationTest {
 
-    def genSynchronizedObject[B](treeViewPath: Array[Int],
-                                 obj: B,
-                                 owner: String,
-                                 descriptions: TreeViewBehavior): B with PuppetWrapper[B]
+    @Test
+    def makeSerial(): Unit = {
+        val fst = new FSTSerializer
+        fst
+    }
+
 }

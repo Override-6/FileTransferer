@@ -19,7 +19,6 @@ import fr.linkit.api.local.generation.cbp.ClassBlueprint
 import fr.linkit.api.local.generation.compilation.CompilationResult
 import fr.linkit.api.local.generation.compilation.access.CompilerType
 import fr.linkit.engine.connection.cache.repo.generation.WrapperCompilationRequestFactory.DefaultClassBlueprint
-import fr.linkit.engine.connection.cache.repo.generation.WrappersClassResource.WrapperSuffixName
 import fr.linkit.engine.connection.cache.repo.generation.bp.ScalaWrapperClassBlueprint
 import fr.linkit.engine.connection.cache.repo.generation.rectifier.ClassRectifier
 import fr.linkit.engine.local.LinkitApplication
@@ -56,7 +55,7 @@ class WrapperCompilationRequestFactory extends AbstractCompilationRequestFactory
                                     val (byteCode, wrapperClass) = new ClassRectifier(desc, wrapperClassName, loader, clazz).rectifiedClass
                                     val wrapperClassFile         = req.classDir.resolve(wrapperClassName.replace(".", File.separator) + ".class")
                                     Files.write(wrapperClassFile, byteCode)
-                                    clazz.getSimpleName //Invoking a method in order to make the class load its reflectionData (causes fatal error if not made directly)
+                                    CloneHelper.prepareClass(clazz)
                                     ClassMappings.putClass(wrapperClass)
                                     wrapperClass
                                 })

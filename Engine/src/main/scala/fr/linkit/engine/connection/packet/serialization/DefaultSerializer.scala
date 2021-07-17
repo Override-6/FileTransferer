@@ -13,19 +13,13 @@
 package fr.linkit.engine.connection.packet.serialization
 
 import fr.linkit.api.connection.network.Network
-import fr.linkit.api.connection.cache.repo.PuppetWrapper
-import fr.linkit.api.connection.packet.serialization.{Serializer, StringRepresentable}
-import fr.linkit.api.local.system.Version
-import fr.linkit.engine.connection.packet.serialization.procedure.PuppetWrapperProcedure
+import fr.linkit.api.connection.packet.serialization.Serializer
 import fr.linkit.engine.connection.packet.serialization.tree.DefaultSerialContext
-import fr.linkit.engine.connection.packet.serialization.tree.nodes.StringRepresentableNode
-
-import java.nio.file.Path
 
 class DefaultSerializer() extends Serializer {
 
     private val context = new DefaultSerialContext
-    private val finder = context.getFinder
+    private val finder  = context.getFinder
 
     override val signature: Array[Byte] = Array(4)
 
@@ -52,17 +46,6 @@ class DefaultSerializer() extends Serializer {
 
     def initNetwork(network: Network): Unit = {
         context.updateNetwork(network)
-    }
-
-    context.attachFactory(StringRepresentableNode(Version))
-    context.attachFactory(StringRepresentableNode(PathRepresentable))
-    context.attachProcedure[PuppetWrapper[Serializable]](PuppetWrapperProcedure)
-
-    private object PathRepresentable extends StringRepresentable[Path] {
-
-        override def getRepresentation(t: Path): String = t.toString
-
-        override def fromRepresentation(str: String): Path = Path.of(str)
     }
 
 }

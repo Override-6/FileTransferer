@@ -30,5 +30,5 @@ trait Chip[S] {
      * Invokes the method of the chipped object.
      * The method is determined by the methoidID integer. (see [[SimplePuppetClassDescription]]
      * */
-    def callMethod(methodID: Int, params: Array[Array[Any]]): Any
+    def callMethod(methodID: Int, params: Array[Any]): Any
 }

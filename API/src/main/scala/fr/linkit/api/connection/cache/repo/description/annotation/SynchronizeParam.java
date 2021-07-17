@@ -10,11 +10,14 @@
  *  questions.
  */
 
-package fr.linkit.engine.test.classes
+package fr.linkit.api.connection.cache.repo.description.annotation;
 
-import fr.linkit.api.connection.cache.repo.description.annotation.{InvocationKind, MethodControl}
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-@MethodControl(value = InvocationKind.ONLY_LOCAL, pure = false, mutates =  "arg2")
-class AnnotatedClass {
-
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.PARAMETER)
+public @interface SynchronizeParam {
 }

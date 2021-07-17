@@ -121,6 +121,7 @@ object SimplePuppetClassDescription {
     def apply[A](clazz: Class[A]): SimplePuppetClassDescription[A] = {
         if (classOf[PuppetWrapper[_]].isAssignableFrom(clazz))
             throw new IllegalArgumentException("Provided class already extends from PuppetWrapper")
+
         val tpe = runtimeMirror(clazz.getClassLoader).classSymbol(clazz).selfType
         new SimplePuppetClassDescription(tpe, clazz, clazz.getClassLoader)
     }
